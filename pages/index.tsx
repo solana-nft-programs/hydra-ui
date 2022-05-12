@@ -1,4 +1,10 @@
-import { FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
+import { executeTransaction } from '@cardinal/staking'
+import {
+  Fanout,
+  FanoutClient,
+  FanoutMembershipVoucher,
+  MembershipModel,
+} from '@glasseaters/hydra-sdk'
 import NodeWallet from '@project-serum/anchor/dist/cjs/nodewallet'
 import { useWallet } from '@solana/wallet-adapter-react'
 import {
@@ -6,119 +12,208 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
+  Transaction,
 } from '@solana/web3.js'
 import { Header } from 'common/Header'
+import { notify } from 'common/Notification'
+import { tryPublicKey } from 'common/utils'
 import { asWallet } from 'common/Wallets'
 import type { NextPage } from 'next'
 import Image from 'next/image'
+import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
+import { HydraWalletInitParams, useHydraContext } from 'providers/HydraProvider'
 import { useState } from 'react'
 import styles from '../styles/Home.module.css'
 
 const Home: NextPage = () => {
   const wallet = useWallet()
+  const { connection } = useEnvironmentCtx()
+  const { hydraWallet, createHydraWallet } = useHydraContext()
 
-  let [hydraState, setHydraState] = useState<{
-    hydraWallet?: HydraWallet
-    members?: PublicKey[]
-  }>({})
+  const [walletName, setWalletName] = useState<undefined | string>(undefined)
+  const [hydraWalletMembers, setHydraWalletMembers] = useState<
+    { memberKey?: string; shares?: number }[]
+  >([{ memberKey: undefined, shares: undefined }])
 
-  let fanoutSdk: FanoutClient
-  let hydraWallet: HydraWallet
+  const validateAndCreateWallet = async () => {
+    try {
+      if (!walletName) {
+        throw 'Specify a wallet name'
+      }
+      if (walletName.includes(' ')) {
+        throw 'Wallet name cannot contain spaces'
+      }
+      let shareSum = 0
+      for (const member of hydraWalletMembers) {
+        if (!member.memberKey) {
+          throw 'Please specify all member public keys'
+        }
+        if (!member.shares) {
+          throw 'Please specify all member shares'
+        }
+        const memberPubkey = tryPublicKey(member.memberKey)
+        if (!memberPubkey) {
+          throw 'Invalid member public key, unable to cast to PublicKey'
+        }
+        shareSum += member.shares
+      }
+      if (shareSum !== 100) {
+        throw 'Sum of all shares must equal 100'
+      }
+      if (!hydraWalletMembers || hydraWalletMembers.length == 0) {
+        throw 'Please specify at least one member'
+      }
 
-  type HydraWallet = {
-    fanout: PublicKey // Location of config address on-chain
-    nativeAccount: PublicKey // Account address of fanout wallet
-  }
+      const params: HydraWalletInitParams = {
+        walletName,
+        members: [
+          ...hydraWalletMembers.map((member) => ({
+            publicKey: tryPublicKey(member.memberKey)!,
+            shares: member.shares!,
+          })),
+        ],
+      }
 
-  const createHydraWallet = async () => {
-    if (wallet && wallet.publicKey) {
-      const walletName = 'cardinal-devnet-4'
-      await initializeHydraClient()
-
-      alert('Created Hydra Client')
-
-      hydraWallet = await initializeHydraWallet(walletName)
-
-      const collectionWallet = new Keypair()
-
-      alert('Wallet created!')
-
-      await addMemberToHydraWallet(wallet.publicKey, 50)
-      await addMemberToHydraWallet(collectionWallet.publicKey, 50)
-      alert('Members added!')
-
-      setHydraState({
-        hydraWallet,
-        members: [wallet.publicKey, collectionWallet.publicKey],
-      })
+      await createHydraWallet(params)
+    } catch (e) {
+      notify({ message: `Error creating hydra wallet: ${e}`, type: 'error' })
     }
   }
 
-  const initializeHydraClient = async () => {
-    const connection = new Connection(
-      'https://purple-old-lake.solana-devnet.quiknode.pro/13480a1cc2033abc1d3523523bc1acabd97b6874/',
-      'confirmed'
-    )
-
-    fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
-  }
-
-  const initializeHydraWallet = async (walletName: string) => {
-    console.log(fanoutSdk)
-    const { fanout, nativeAccount } = await fanoutSdk.initializeFanout({
-      totalShares: 100,
-      name: walletName,
-      membershipModel: MembershipModel.Wallet,
-    })
-
-    return { fanout: fanout, nativeAccount: nativeAccount } as HydraWallet
-  }
-
-  const retrieveHydraWallet = async (name: string) => {
-    let [key, bump] = await FanoutClient.fanoutKey(name)
-    let [holdingAccount, bump2] = await FanoutClient.nativeAccount(key)
-    console.log(key.toString(), holdingAccount.toString())
-    return { fanout: key, nativeAccount: holdingAccount } as HydraWallet
-  }
-
-  const addMemberToHydraWallet = async (member: PublicKey, shares: number) => {
-    const member1 = new Keypair()
-    const { membershipAccount } = await fanoutSdk.addMemberWallet({
-      fanout: hydraWallet.fanout,
-      fanoutNativeAccount: hydraWallet.nativeAccount,
-      membershipKey: member1.publicKey,
-      shares: shares,
-    })
-
-    return membershipAccount
-  }
-
   return (
-    <div className={styles.container}>
+    <div className="bg-white">
       <Header />
 
       <main className={styles.main}>
-        <button onClick={() => createHydraWallet()}>Create Hydra Wallet</button>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Hydra Playground!</a>
-        </h1>
-        {hydraState.hydraWallet && (
-          <div>
+        {hydraWallet && (
+          <div className="text-gray-700 bg-green-300 w-full max-w-lg text-center py-3 mb-10">
+            <p className="font-bold uppercase tracking-wide">
+              Hydra Wallet Created
+            </p>
             <p>
-              Hydra Wallet Address:{' '}
-              {hydraState.hydraWallet.nativeAccount.toString()} (100 shares)
+              {' '}
+              Access the wallet at{' '}
+              <a href={`/wallet/${hydraWallet.walletName}`}>
+                localhost:3000/
+                {hydraWallet ? hydraWallet.walletName : null}
+              </a>
             </p>
           </div>
         )}
-        {hydraState.members && (
-          <div>
-            {hydraState.members.map((member) => (
-              <p key={member.toString()}>
-                Member Added: {member.toString()} (50 shares)
-              </p>
-            ))}
+        <form className="w-full max-w-lg">
+          <div className="w-full mb-6">
+            <label
+              className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+              htmlFor="grid-first-name"
+            >
+              Hydra Wallet Name
+            </label>
+            <input
+              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+              id="grid-first-name"
+              type="text"
+              placeholder="cardinal-wallet"
+              onChange={(e) => {
+                setWalletName(e.target.value)
+              }}
+              value={walletName}
+            />
           </div>
-        )}
+          <div className="flex flex-wrap mb-6">
+            <div className="w-full md:w-4/5 pr-3 mb-6 md:mb-0">
+              <label
+                className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                htmlFor="grid-first-name"
+              >
+                Wallet Address
+              </label>
+              {hydraWalletMembers.map((member, i) => {
+                return (
+                  <input
+                    key={i}
+                    className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+                    id="grid-first-name"
+                    type="text"
+                    placeholder="Cmw...4xW"
+                    onChange={(e) => {
+                      const walletMembers = hydraWalletMembers
+                      walletMembers[i]!.memberKey = e.target.value
+                      setHydraWalletMembers(walletMembers)
+                    }}
+                    value={member.memberKey}
+                  />
+                )
+              })}
+            </div>
+            <div className="w-full md:w-1/5">
+              <label
+                className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                htmlFor="grid-first-name"
+              >
+                Shares / 100
+              </label>
+              {hydraWalletMembers.map((member, i) => {
+                return (
+                  <div className="flex flex-row" key={i}>
+                    <input
+                      className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+                      id="grid-last-name"
+                      type="text"
+                      placeholder="10"
+                      onChange={(e) => {
+                        const walletMembers = hydraWalletMembers
+                        walletMembers[i]!.shares = parseInt(e.target.value)
+                        setHydraWalletMembers(walletMembers)
+                      }}
+                      value={member.shares}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div>
+              <button
+                type="button"
+                className="bg-gray-200 text-gray-600 hover:bg-gray-300 px-4 py-3 rounded-md mr-3"
+                onClick={() =>
+                  setHydraWalletMembers([
+                    ...hydraWalletMembers,
+                    {
+                      memberKey: undefined,
+                      shares: undefined,
+                    },
+                  ])
+                }
+              >
+                Add Member
+              </button>
+              <button
+                type="button"
+                className="bg-gray-200 text-gray-600 hover:bg-gray-300 px-4 py-3 rounded-md "
+                onClick={() =>
+                  setHydraWalletMembers(
+                    hydraWalletMembers.filter(
+                      (item, index) => index !== hydraWalletMembers.length - 1
+                    )
+                  )
+                }
+              >
+                Remove Member
+              </button>
+            </div>
+            <div>
+              <button
+                type="button"
+                className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md "
+                onClick={() => validateAndCreateWallet()}
+              >
+                Create Hydra Wallet
+              </button>
+            </div>
+          </div>
+        </form>
       </main>
 
       <footer className={styles.footer}>

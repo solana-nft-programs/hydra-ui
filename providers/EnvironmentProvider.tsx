@@ -29,7 +29,7 @@ export const ENVIRONMENTS: Environment[] = [
   },
   {
     label: "devnet",
-    value: "https://api.devnet.solana.com",
+    value: "https://purple-old-lake.solana-devnet.quiknode.pro/13480a1cc2033abc1d3523523bc1acabd97b6874/",
   },
   {
     label: "localnet",

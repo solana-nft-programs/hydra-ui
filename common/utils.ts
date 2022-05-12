@@ -13,3 +13,25 @@ export function shortPubKey(
     ?.toString()
     .substring(pubkey?.toString().length - 4)}`
 }
+
+export const tryPublicKey = (
+  publicKeyString: web3.PublicKey | string | string[] | undefined | null
+): web3.PublicKey | null => {
+  if (publicKeyString instanceof web3.PublicKey) return publicKeyString
+  if (!publicKeyString) return null
+  try {
+    return new web3.PublicKey(publicKeyString)
+  } catch (e) {
+    return null
+  }
+}
+
+export function pubKeyUrl(
+  pubkey: web3.PublicKey | null | undefined,
+  cluster: string
+) {
+  if (!pubkey) return 'https://explorer.solana.com'
+  return `https://explorer.solana.com/address/${pubkey.toString()}${
+    cluster === 'devnet' ? '?cluster=devnet' : ''
+  }`
+}

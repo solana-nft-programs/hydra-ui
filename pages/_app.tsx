@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import 'antd/dist/antd.dark.css'
 import type { AppProps } from 'next/app'
 import { WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletIdentityProvider } from '@cardinal/namespaces-components'
@@ -13,6 +14,7 @@ import {
   PhantomWalletAdapter,
 } from '@solana/wallet-adapter-wallets'
 import { useMemo } from 'react'
+import { HydraProvider } from 'providers/HydraProvider'
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
@@ -31,7 +33,9 @@ const App = ({
       <WalletProvider wallets={wallets}>
         <WalletIdentityProvider>
           <WalletModalProvider>
-            <Component {...pageProps} />
+            <HydraProvider>
+              <Component {...pageProps} />
+            </HydraProvider>
           </WalletModalProvider>
         </WalletIdentityProvider>
       </WalletProvider>
