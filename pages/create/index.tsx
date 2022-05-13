@@ -49,6 +49,9 @@ const Home: NextPage = () => {
       if (!hydraWalletMembers || hydraWalletMembers.length == 0) {
         throw 'Please specify at least one member'
       }
+      if (!hydraWalletMembers || hydraWalletMembers.length > 9) {
+        throw 'Too many members - submit a PR to https://github.com/cardinal-labs/hydra-ui to increase this minimum'
+      }
       const fanoutId = (await FanoutClient.fanoutKey(walletName))[0]
       const [nativeAccountId] = await FanoutClient.nativeAccount(fanoutId)
       const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
