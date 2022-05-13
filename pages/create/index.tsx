@@ -144,7 +144,7 @@ const Home: NextPage = () => {
               </label>
               {hydraWalletMembers.map((member, i) => {
                 return (
-                  <div className="flex flex-row" key={`share-${i}`}>
+                  <div className="flex" key={`share-${i}`}>
                     <input
                       className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
                       id="grid-last-name"
