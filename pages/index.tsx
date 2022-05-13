@@ -16,7 +16,21 @@ const Home: NextPage = () => {
         <div className="block uppercase tracking-wide text-gray-700 text-lg font-bold mb-6">
           Welcome to Hydra UI
         </div>
-        <div className="w-full max-w-lg">
+        <form
+          className="w-full max-w-lg"
+          onSubmit={(e) => {
+            e.preventDefault()
+            router.push(
+              `/${walletName}${
+                ctx.environment.label !== 'mainnet'
+                  ? `?cluster=${ctx.environment.label}`
+                  : ''
+              }`,
+              undefined,
+              { shallow: true }
+            )
+          }}
+        >
           <div className="w-full mb-6">
             <label
               className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
@@ -54,7 +68,7 @@ const Home: NextPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </form>
       </main>
     </div>
   )
