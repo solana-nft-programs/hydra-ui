@@ -48,6 +48,7 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   const {
     query: { walletId },
   } = useRouter()
+  const router = useRouter()
 
   const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
 
@@ -80,18 +81,26 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   }
 
   const loadHydraWallet = async (walletName: string) => {
-    let [fanoutAccount] = await FanoutClient.fanoutKey(walletName)
-    let [nativeAccount] = await FanoutClient.nativeAccount(fanoutAccount)
-    const fanoutData = await fanoutSdk.fetch<Fanout>(fanoutAccount, Fanout)
-    const balance = (await connection.getBalance(nativeAccount)) / 1e9
+    try {
+      let [fanoutAccount] = await FanoutClient.fanoutKey(walletName)
+      let [nativeAccount] = await FanoutClient.nativeAccount(fanoutAccount)
+      const fanoutData = await fanoutSdk.fetch<Fanout>(fanoutAccount, Fanout)
+      const balance = (await connection.getBalance(nativeAccount)) / 1e9
 
-    setHydraWallet({
-      walletName,
-      fanoutAccount,
-      nativeAccount,
-      fanoutData,
-      balance,
-    })
+      setHydraWallet({
+        walletName,
+        fanoutAccount,
+        nativeAccount,
+        fanoutData,
+        balance,
+      })
+    } catch (e) {
+      notify({
+        message: `Incorrect wallet ID, error loading Hydra wallet: ${e}`,
+        type: 'error',
+      })
+      router.push('/')
+    }
   }
 
   const claimShare = async () => {
@@ -126,14 +135,8 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    if (walletName) {
-      loadHydraWallet(walletName)
-    }
-  }, [walletName])
-
-  useEffect(() => {
     if (walletId && typeof walletId === 'string') {
-      setWalletName(walletId)
+      loadHydraWallet(walletId)
     } else {
       setHydraWallet(undefined)
     }
