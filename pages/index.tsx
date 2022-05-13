@@ -16,7 +16,7 @@ const Home: NextPage = () => {
         <div className="block uppercase tracking-wide text-gray-700 text-lg font-bold mb-6">
           Welcome to Hydra UI
         </div>
-        <form className="w-full max-w-lg">
+        <div className="w-full max-w-lg">
           <div className="w-full mb-6">
             <label
               className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
@@ -27,6 +27,7 @@ const Home: NextPage = () => {
             <input
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
               id="grid-first-name"
+              onSubmit={() => alert('HEr')}
               type="text"
               placeholder="cardinal-wallet"
               onChange={(e) => {
@@ -35,23 +36,25 @@ const Home: NextPage = () => {
               value={walletName}
             />
             <div>
-              <button
-                className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md float-right"
+              <div
+                className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md float-right cursor-pointer"
                 onClick={() => {
                   router.push(
                     `/${walletName}${
                       ctx.environment.label !== 'mainnet'
                         ? `?cluster=${ctx.environment.label}`
                         : ''
-                    }`
+                    }`,
+                    undefined,
+                    { shallow: true }
                   )
                 }}
               >
                 Load Hydra Wallet
-              </button>
+              </div>
             </div>
           </div>
-        </form>
+        </div>
       </main>
     </div>
   )

@@ -11,9 +11,11 @@ import { asWallet } from 'common/Wallets'
 import { FanoutData, useFanoutData } from 'hooks/useFanoutData.ts'
 import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
 import type { NextPage } from 'next'
+import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 
 const Home: NextPage = () => {
+  const router = useRouter()
   const fanoutMembershipVouchers = useFanoutMembershipVouchers()
   const wallet = useWallet()
   const fanoutData = useFanoutData()
@@ -56,6 +58,30 @@ const Home: NextPage = () => {
       <Header />
       <main className="h-[80%] py-16 flex flex-1 flex-col justify-center items-center">
         <div className="text-gray-700 w-full max-w-lg py-3 md:px-0 px-10 mb-10">
+          {fanoutData.error && (
+            <div className="text-gray-700 bg-red-300 w-full max-w-lg text-center py-3 mb-10">
+              <div className="font-bold uppercase tracking-wide">
+                Hydra Wallet not found
+              </div>
+              <div
+                className="cursor-pointer"
+                onClick={() =>
+                  router.push(
+                    `/${
+                      environment.label !== 'mainnet'
+                        ? `?cluster=${environment.label}`
+                        : ''
+                    }`,
+                    undefined,
+                    { shallow: true }
+                  )
+                }
+              >
+                Retry
+              </div>
+            </div>
+          )}
+
           <div className="mb-5 border-b-2">
             <div className="font-bold uppercase tracking-wide text-2xl mb-1">
               {fanoutData.data?.fanout.name ? (

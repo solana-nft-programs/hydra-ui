@@ -23,14 +23,11 @@ const App = ({
   pageProps,
   cluster,
 }: AppProps & { cluster: string }) => {
-  const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new GlowWalletAdapter()],
-    []
-  )
-
   return (
     <EnvironmentProvider defaultCluster={cluster}>
-      <WalletProvider wallets={wallets}>
+      <WalletProvider
+        wallets={[new PhantomWalletAdapter(), new GlowWalletAdapter()]}
+      >
         <WalletIdentityProvider>
           <WalletModalProvider>
             <>
