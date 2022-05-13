@@ -59,7 +59,12 @@ const Home: NextPage = () => {
                         connection={connection}
                         address={voucher.parsed.membershipKey}
                       />
-                      {`(${voucher.parsed.shares.toString()} shares)`}
+                      <span className="ml-2">
+                        {`(${voucher.parsed.shares.toString()} shares, `}
+                        {`${
+                          parseInt(voucher.parsed.totalInflow.toString()) / 1e9
+                        }◎ claimed)`}
+                      </span>
                     </div>
                   </li>
                 ))}
