@@ -1,8 +1,11 @@
-import { FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
+import { Fanout, FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
+import { Wallet } from '@saberhq/solana-contrib'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
+import { executeTransaction } from 'common/Transactions'
 import { tryPublicKey } from 'common/utils'
 import { asWallet } from 'common/Wallets'
 import type { NextPage } from 'next'
@@ -46,22 +49,38 @@ const Home: NextPage = () => {
       if (!hydraWalletMembers || hydraWalletMembers.length == 0) {
         throw 'Please specify at least one member'
       }
-
+      const fanoutId = (await FanoutClient.fanoutKey(walletName))[0]
+      const [nativeAccountId] = await FanoutClient.nativeAccount(fanoutId)
       const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
-      const { fanout, nativeAccount } = await fanoutSdk.initializeFanout({
-        totalShares: 100,
-        name: walletName,
-        membershipModel: MembershipModel.Wallet,
-      })
-
+      try {
+        let fanoutData = await fanoutSdk.fetch<Fanout>(fanoutId, Fanout)
+        if (fanoutData) {
+          throw `Wallet '${walletName}' already exists`
+        }
+      } catch (e) {}
+      const transaction = new Transaction()
+      transaction.add(
+        ...(
+          await fanoutSdk.initializeFanoutInstructions({
+            totalShares: 100,
+            name: walletName,
+            membershipModel: MembershipModel.Wallet,
+          })
+        ).instructions
+      )
       for (const member of hydraWalletMembers) {
-        await fanoutSdk.addMemberWallet({
-          fanout: fanout,
-          fanoutNativeAccount: nativeAccount,
-          membershipKey: tryPublicKey(member.memberKey)!,
-          shares: member.shares!,
-        })
+        transaction.add(
+          ...(
+            await fanoutSdk.addMemberWalletInstructions({
+              fanout: fanoutId,
+              fanoutNativeAccount: nativeAccountId,
+              membershipKey: tryPublicKey(member.memberKey)!,
+              shares: member.shares!,
+            })
+          ).instructions
+        )
       }
+      await executeTransaction(connection, wallet as Wallet, transaction, {})
       setSuccess(true)
     } catch (e) {
       notify({
@@ -109,6 +128,7 @@ const Home: NextPage = () => {
               placeholder="cardinal-wallet"
               onChange={(e) => {
                 setWalletName(e.target.value)
+                setSuccess(false)
               }}
               value={walletName}
             />
