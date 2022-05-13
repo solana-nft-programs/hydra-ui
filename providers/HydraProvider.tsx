@@ -4,8 +4,10 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, Transaction } from '@solana/web3.js'
 import { notify } from 'common/Notification'
 import { asWallet } from 'common/Wallets'
+import { useFanoutId } from 'hooks/useFanoutId'
+import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
 import { useRouter } from 'next/router'
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useEnvironmentCtx } from './EnvironmentProvider'
 
 export type HydraWallet = {
@@ -41,6 +43,9 @@ const HydraContext: React.Context<HydraContextValues> =
 export function HydraProvider({ children }: { children: React.ReactNode }) {
   const { connection } = useEnvironmentCtx()
   const wallet = useWallet()
+
+  const fanoutId = useFanoutId()
+  const fanoutMembershipVouchers = useFanoutMembershipVouchers()
   const [hydraWallet, setHydraWallet] = useState<undefined | HydraWallet>(
     undefined
   )
@@ -60,7 +65,7 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
     })
 
     for (const member of params.members) {
-      const { membershipAccount } = await fanoutSdk.addMemberWallet({
+      await fanoutSdk.addMemberWallet({
         fanout: fanout,
         fanoutNativeAccount: nativeAccount,
         membershipKey: member.publicKey,
@@ -83,6 +88,7 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   const loadHydraWallet = async (walletName: string) => {
     try {
       let [fanoutAccount] = await FanoutClient.fanoutKey(walletName)
+
       let [nativeAccount] = await FanoutClient.nativeAccount(fanoutAccount)
       const fanoutData = await fanoutSdk.fetch<Fanout>(fanoutAccount, Fanout)
       const balance = (await connection.getBalance(nativeAccount)) / 1e9

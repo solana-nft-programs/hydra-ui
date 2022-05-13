@@ -1,18 +1,15 @@
+import { DisplayAddress } from '@cardinal/namespaces-components'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
-import { notify } from 'common/Notification'
-import { pubKeyUrl, shortPubKey, tryPublicKey } from 'common/utils'
+import { pubKeyUrl, shortPubKey } from 'common/utils'
+import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
 import type { NextPage } from 'next'
-import Image from 'next/image'
-import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
-import { HydraWalletInitParams, useHydraContext } from 'providers/HydraProvider'
-import { useState } from 'react'
-import styles from '../../styles/Home.module.css'
+import { useHydraContext } from 'providers/HydraProvider'
 
 const Home: NextPage = () => {
-  const wallet = useWallet()
+  const fanoutMembershipVouchers = useFanoutMembershipVouchers()
   const { hydraWallet, claimShare } = useHydraContext()
   const { connection, environment } = useEnvironmentCtx()
 
@@ -51,6 +48,22 @@ const Home: NextPage = () => {
               <p className="font-bold uppercase tracking-wide text-md mb-1">
                 Total Members: {hydraWallet.fanoutData?.totalMembers.toString()}
               </p>
+              <ul className="list-disc ml-6">
+                {fanoutMembershipVouchers.data?.map((voucher) => (
+                  <li
+                    key={voucher.pubkey.toString()}
+                    className="relative font-bold uppercase tracking-wide text-md mb-1"
+                  >
+                    <div className="flex">
+                      <DisplayAddress
+                        connection={connection}
+                        address={voucher.parsed.membershipKey}
+                      />
+                      {`(${voucher.parsed.shares.toString()} shares)`}
+                    </div>
+                  </li>
+                ))}
+              </ul>
               <p className="font-bold uppercase tracking-wide text-md mb-1">
                 Total Shares: {hydraWallet.fanoutData?.totalShares.toString()}
               </p>
