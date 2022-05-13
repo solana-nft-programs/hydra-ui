@@ -1,21 +1,27 @@
 import { useWallet } from '@solana/wallet-adapter-react'
-import {
-  useWalletModal,
-  WalletMultiButton,
-} from '@solana/wallet-adapter-react-ui'
-import { AddressImage, DisplayAddress } from '@cardinal/namespaces-components'
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import { AccountConnect } from '@cardinal/namespaces-components'
 
+import { Wallet } from '@saberhq/solana-contrib'
 import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
-import { shortPubKey } from './utils'
-import { HiUserCircle } from 'react-icons/hi'
+import styled from '@emotion/styled'
+import { Cluster } from '@solana/web3.js'
+
+export const StyledWalletButton = styled(WalletMultiButton)`
+  color: rgb(55, 65, 81, 1);
+  &:hover {
+    background: none !important;
+  }
+  .wallet-adapter-button {
+    padding: 0px;
+  }
+`
 
 export const Header = () => {
   const router = useRouter()
   const ctx = useEnvironmentCtx()
   const wallet = useWallet()
-  const { setVisible } = useWalletModal()
-
   return (
     <div className={`flex flex-row h-20 justify-between pl-5 text-white`}>
       <div className="flex items-center gap-3">
@@ -56,55 +62,16 @@ export const Header = () => {
             <p className="my-auto mr-10 hover:cursor-pointer">Create</p>
           </div>
         </div>
-        {wallet.connected ? (
-          <div
-            className="flex cursor-pointer gap-2"
-            onClick={() => setVisible(true)}
-          >
-            <AddressImage
-              connection={ctx.connection}
-              address={wallet.publicKey || undefined}
-              height="40px"
-              width="40px"
-              dark={true}
-              placeholder={
-                <div
-                  style={{
-                    color: 'white',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    marginRight: '5px',
-                  }}
-                >
-                  <div style={{ height: '40px', width: '40px' }}>
-                    <HiUserCircle style={{ height: '100%', width: '100%' }} />
-                  </div>
-                </div>
-              }
-            />
-            <div>
-              <div className="text-white ">
-                <DisplayAddress
-                  style={{ pointerEvents: 'none' }}
-                  connection={ctx.connection}
-                  address={wallet.publicKey || undefined}
-                  height="12px"
-                  width="100px"
-                  dark={true}
-                />
-              </div>
-              <div style={{ color: 'gray' }}>
-                {wallet?.publicKey ? shortPubKey(wallet?.publicKey) : ''}
-              </div>
-            </div>
-          </div>
+        {wallet.connected && wallet.publicKey ? (
+          <AccountConnect
+            connection={ctx.connection}
+            environment={ctx.environment.label as Cluster}
+            handleDisconnect={() => wallet.disconnect()}
+            wallet={wallet as Wallet}
+          />
         ) : (
-          <WalletMultiButton
+          <StyledWalletButton
             style={{
-              color: 'rgba(255,255,255,0.8)',
               fontSize: '14px',
               zIndex: 10,
               height: '38px',

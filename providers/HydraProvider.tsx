@@ -1,11 +1,9 @@
 import { executeTransaction } from '@cardinal/staking'
 import { Fanout, FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { PublicKey, Transaction } from '@solana/web3.js'
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js'
 import { notify } from 'common/Notification'
 import { asWallet } from 'common/Wallets'
-import { useFanoutId } from 'hooks/useFanoutId'
-import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
 import { useRouter } from 'next/router'
 import React, { useContext, useEffect, useState } from 'react'
 import { useEnvironmentCtx } from './EnvironmentProvider'
@@ -44,12 +42,9 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   const { connection } = useEnvironmentCtx()
   const wallet = useWallet()
 
-  const fanoutId = useFanoutId()
-  const fanoutMembershipVouchers = useFanoutMembershipVouchers()
   const [hydraWallet, setHydraWallet] = useState<undefined | HydraWallet>(
     undefined
   )
-  const [walletName, setWalletName] = useState<null | string>(null)
   const {
     query: { walletId },
   } = useRouter()
@@ -74,7 +69,8 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
     }
 
     const fanoutAccount = await fanoutSdk.fetch<Fanout>(fanout, Fanout)
-    const balance = (await connection.getBalance(nativeAccount)) / 1e9
+    const balance =
+      (await connection.getBalance(nativeAccount)) / LAMPORTS_PER_SOL
 
     setHydraWallet({
       walletName: params.walletName,
@@ -102,7 +98,8 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
       })
     } catch (e) {
       notify({
-        message: `Incorrect wallet ID, error loading Hydra wallet: ${e}`,
+        message: `Incorrect wallet ID, error loading Hydra wallet`,
+        description: `${e}`,
         type: 'error',
       })
       router.push('/')
@@ -120,7 +117,6 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
         })
 
         const transaction = new Transaction()
-
         transaction.instructions = [...distMember1.instructions]
 
         await executeTransaction(connection, asWallet(wallet), transaction, {

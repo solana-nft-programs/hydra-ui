@@ -8,15 +8,18 @@ import { useDataHook } from './useDataHook'
 import { AccountData } from '@cardinal/token-manager'
 import { FanoutMembershipVoucher } from '@glasseaters/hydra-sdk'
 
+const HYDRA_PROGRAM_ID = new PublicKey(
+  'hyDQ4Nz1eYyegS6JfenyKwKzYxRsCWCriYSAjtzP4Vg'
+)
+
 export const useFanoutMembershipVouchers = () => {
   const { connection } = useEnvironmentCtx()
   const { data: fanoutId } = useFanoutId()
-  console.log(fanoutId?.toString())
   return useDataHook<AccountData<FanoutMembershipVoucher>[]>(
     async () => {
       if (!fanoutId) return
       const programAccounts = await connection.getProgramAccounts(
-        new PublicKey('hyDQ4Nz1eYyegS6JfenyKwKzYxRsCWCriYSAjtzP4Vg'),
+        HYDRA_PROGRAM_ID,
         {
           filters: [
             {
@@ -38,7 +41,7 @@ export const useFanoutMembershipVouchers = () => {
           ],
         }
       )
-      const deserializedProgramAccounts = programAccounts.map((account) => {
+      return programAccounts.map((account) => {
         return {
           pubkey: account.pubkey,
           parsed: hydra.FanoutMembershipVoucher.fromAccountInfo(
@@ -46,15 +49,8 @@ export const useFanoutMembershipVouchers = () => {
           )[0],
         }
       })
-      console.log(
-        deserializedProgramAccounts
-          .map((programAccount) => programAccount.pubkey.toString()).filter((v) => v === '9rA8CJ3bK9F9QMH2EAG7Mt4KSLonu34RjZ68THXJx1ZN')
-      )
-
-      console.log(deserializedProgramAccounts)
-      return deserializedProgramAccounts
     },
     [fanoutId?.toString()],
-    { name: 'useFanoutMembershipVoucher', refreshInterval: 10000 }
+    { name: 'useFanoutMembershipVoucher' }
   )
 }
