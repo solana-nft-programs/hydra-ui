@@ -1,19 +1,19 @@
+import { FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
 import { tryPublicKey } from 'common/utils'
+import { asWallet } from 'common/Wallets'
 import type { NextPage } from 'next'
-import Image from 'next/image'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
-import { HydraWalletInitParams, useHydraContext } from 'providers/HydraProvider'
 import { useState } from 'react'
-import styles from '../../styles/Home.module.css'
 
 const Home: NextPage = () => {
-  const { hydraWallet, createHydraWallet } = useHydraContext()
-
+  const { connection } = useEnvironmentCtx()
+  const wallet = useWallet()
   const [walletName, setWalletName] = useState<undefined | string>(undefined)
+  const [success, setSuccess] = useState(false)
   const [hydraWalletMembers, setHydraWalletMembers] = useState<
     { memberKey?: string; shares?: number }[]
   >([{ memberKey: undefined, shares: undefined }])
@@ -47,28 +47,36 @@ const Home: NextPage = () => {
         throw 'Please specify at least one member'
       }
 
-      const params: HydraWalletInitParams = {
-        walletName,
-        members: [
-          ...hydraWalletMembers.map((member) => ({
-            publicKey: tryPublicKey(member.memberKey)!,
-            shares: member.shares!,
-          })),
-        ],
-      }
+      const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
+      const { fanout, nativeAccount } = await fanoutSdk.initializeFanout({
+        totalShares: 100,
+        name: walletName,
+        membershipModel: MembershipModel.Wallet,
+      })
 
-      await createHydraWallet(params)
+      for (const member of hydraWalletMembers) {
+        await fanoutSdk.addMemberWallet({
+          fanout: fanout,
+          fanoutNativeAccount: nativeAccount,
+          membershipKey: tryPublicKey(member.memberKey)!,
+          shares: member.shares!,
+        })
+      }
+      setSuccess(true)
     } catch (e) {
-      notify({ message: `Error creating hydra wallet: ${e}`, type: 'error' })
+      notify({
+        message: `Error creating hydra wallet`,
+        description: `${e}`,
+        type: 'error',
+      })
     }
   }
 
   return (
     <div className="bg-white h-screen max-h-screen">
       <Header />
-
-      <main className="h-[90%] py-16 flex flex-1 flex-col justify-center items-center">
-        {hydraWallet && (
+      <main className="h-[80%] py-16 flex flex-1 flex-col justify-center items-center">
+        {success && (
           <div className="text-gray-700 bg-green-300 w-full max-w-lg text-center py-3 mb-10">
             <p className="font-bold uppercase tracking-wide">
               Hydra Wallet Created
@@ -76,9 +84,12 @@ const Home: NextPage = () => {
             <p>
               {' '}
               Access the wallet at{' '}
-              <a href={`/wallet/${hydraWallet.walletName}`}>
-                localhost:3000/
-                {hydraWallet ? hydraWallet.walletName : null}
+              <a
+                href={`/${walletName}${window.location.search ?? ''}`}
+                className="text-blue-600 hover:text-blue-500"
+              >
+                {window.location.origin}/{walletName}
+                {window.location.search ?? ''}
               </a>
             </p>
           </div>
@@ -103,7 +114,7 @@ const Home: NextPage = () => {
             />
           </div>
           <div className="flex flex-wrap mb-6">
-            <div className="w-full md:w-4/5 pr-3 mb-6 md:mb-0">
+            <div className="w-4/5 pr-3 mb-6 md:mb-0">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                 Wallet Address
               </label>
@@ -127,13 +138,13 @@ const Home: NextPage = () => {
                   )
                 })}
             </div>
-            <div className="w-full md:w-1/5">
+            <div className="w-1/5">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                 Shares / 100
               </label>
               {hydraWalletMembers.map((member, i) => {
                 return (
-                  <div className="flex flex-row" key={`share-${i}`}>
+                  <div className="flex" key={`share-${i}`}>
                     <input
                       className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
                       id="grid-last-name"
