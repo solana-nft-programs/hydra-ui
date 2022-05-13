@@ -19,13 +19,43 @@ export const Header = () => {
   return (
     <div className={`flex flex-row h-20 justify-between pl-5 text-white`}>
       <div className="flex items-center gap-3">
+        <div
+          className="text-gray-700 font-bold uppercase tracking-wide hover:cursor-pointer"
+          onClick={() =>
+            router.push(
+              `/${
+                ctx.environment.label !== 'mainnet'
+                  ? `?cluster=${ctx.environment.label}`
+                  : ''
+              }`
+            )
+          }
+        >
+          Hydra UI
+        </div>
         {ctx.environment.label !== 'mainnet' && (
           <div className="cursor-pointer rounded-md bg-[#9945ff] p-1 text-[10px] italic text-white">
             {ctx.environment.label}
           </div>
         )}
       </div>
+
       <div className="relative my-auto flex items-center pr-8 align-middle">
+        <div className="relative my-auto flex items-center align-middle text-gray-700 font-bold uppercase tracking-wide">
+          <div
+            onClick={() =>
+              router.push(
+                `/create${
+                  ctx.environment.label !== 'mainnet'
+                    ? `?cluster=${ctx.environment.label}`
+                    : ''
+                }`
+              )
+            }
+          >
+            <p className="my-auto mr-10 hover:cursor-pointer">Create</p>
+          </div>
+        </div>
         {wallet.connected ? (
           <div
             className="flex cursor-pointer gap-2"

@@ -134,6 +134,8 @@ export function HydraProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (walletId && typeof walletId === 'string') {
       setWalletName(walletId)
+    } else {
+      setHydraWallet(undefined)
     }
   }, [walletId])
 

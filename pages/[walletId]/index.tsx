@@ -1,4 +1,5 @@
 import { useWallet } from '@solana/wallet-adapter-react'
+import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
 import { pubKeyUrl, shortPubKey, tryPublicKey } from 'common/utils'
@@ -16,12 +17,11 @@ const Home: NextPage = () => {
   const { connection, environment } = useEnvironmentCtx()
 
   return (
-    <div className="bg-white">
+    <div className="bg-white h-screen max-h-screen">
       <Header />
-
-      <main className={styles.main}>
+      <main className="h-[90%] py-16 flex flex-1 flex-col justify-center items-center">
         {hydraWallet && (
-          <div className="text-gray-700 w-full max-w-lg py-3 mb-10">
+          <div className="text-gray-700 w-full max-w-lg py-3 md:px-0 px-10 mb-10">
             <div className="mb-5 border-b-2">
               <p className="font-bold uppercase tracking-wide text-2xl mb-1">
                 {hydraWallet.walletName}
@@ -55,29 +55,18 @@ const Home: NextPage = () => {
                 Total Shares: {hydraWallet.fanoutData?.totalShares.toString()}
               </p>
             </div>
-            <button
+            <AsyncButton
               type="button"
+              variant="primary"
+              bgColor="rgb(96 165 250)"
               className="bg-blue-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
-              onClick={() => claimShare()}
+              handleClick={async () => claimShare()}
             >
               Claim Share
-            </button>
+            </AsyncButton>
           </div>
         )}
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   )
 }

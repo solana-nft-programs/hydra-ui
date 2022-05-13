@@ -81,32 +81,19 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-white h-screen max-h-screen">
       <Header />
-
-      <main className={styles.main}>
-        {hydraWallet && (
-          <div className="text-gray-700 bg-green-300 w-full max-w-lg text-center py-3 mb-10">
-            <p className="font-bold uppercase tracking-wide">
-              Hydra Wallet Created
-            </p>
-            <p>
-              {' '}
-              Access the wallet at{' '}
-              <a href={`/wallet/${hydraWallet.walletName}`}>
-                localhost:3000/
-                {hydraWallet ? hydraWallet.walletName : null}
-              </a>
-            </p>
-          </div>
-        )}
+      <main className="h-[90%] py-16 flex flex-1 flex-col justify-center items-center">
+        <div className="block uppercase tracking-wide text-gray-700 text-lg font-bold mb-6">
+          Welcome to Hydra UI
+        </div>
         <form className="w-full max-w-lg">
           <div className="w-full mb-6">
             <label
               className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
               htmlFor="grid-first-name"
             >
-              Hydra Wallet Name
+              Wallet Name
             </label>
             <input
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
@@ -118,116 +105,18 @@ const Home: NextPage = () => {
               }}
               value={walletName}
             />
-          </div>
-          <div className="flex flex-wrap mb-6">
-            <div className="w-full md:w-4/5 pr-3 mb-6 md:mb-0">
-              <label
-                className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                htmlFor="grid-first-name"
-              >
-                Wallet Address
-              </label>
-              {hydraWalletMembers.map((member, i) => {
-                return (
-                  <input
-                    key={i}
-                    className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                    id="grid-first-name"
-                    type="text"
-                    placeholder="Cmw...4xW"
-                    onChange={(e) => {
-                      const walletMembers = hydraWalletMembers
-                      walletMembers[i]!.memberKey = e.target.value
-                      setHydraWalletMembers(walletMembers)
-                    }}
-                    value={member.memberKey}
-                  />
-                )
-              })}
-            </div>
-            <div className="w-full md:w-1/5">
-              <label
-                className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                htmlFor="grid-first-name"
-              >
-                Shares / 100
-              </label>
-              {hydraWalletMembers.map((member, i) => {
-                return (
-                  <div className="flex flex-row" key={i}>
-                    <input
-                      className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                      id="grid-last-name"
-                      type="text"
-                      placeholder="10"
-                      onChange={(e) => {
-                        const walletMembers = hydraWalletMembers
-                        walletMembers[i]!.shares = parseInt(e.target.value)
-                        setHydraWalletMembers(walletMembers)
-                      }}
-                      value={member.shares}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-          <div className="flex justify-between">
             <div>
               <button
                 type="button"
-                className="bg-gray-200 text-gray-600 hover:bg-gray-300 px-4 py-3 rounded-md mr-3"
-                onClick={() =>
-                  setHydraWalletMembers([
-                    ...hydraWalletMembers,
-                    {
-                      memberKey: undefined,
-                      shares: undefined,
-                    },
-                  ])
-                }
-              >
-                Add Member
-              </button>
-              <button
-                type="button"
-                className="bg-gray-200 text-gray-600 hover:bg-gray-300 px-4 py-3 rounded-md "
-                onClick={() =>
-                  setHydraWalletMembers(
-                    hydraWalletMembers.filter(
-                      (item, index) => index !== hydraWalletMembers.length - 1
-                    )
-                  )
-                }
-              >
-                Remove Member
-              </button>
-            </div>
-            <div>
-              <button
-                type="button"
-                className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md "
+                className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md float-right"
                 onClick={() => validateAndCreateWallet()}
               >
-                Create Hydra Wallet
+                Load Hydra Wallet
               </button>
             </div>
           </div>
         </form>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   )
 }
