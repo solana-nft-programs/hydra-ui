@@ -22,7 +22,7 @@ const Home: NextPage = () => {
             e.preventDefault()
             router.push(
               `/${walletName}${
-                ctx.environment.label !== 'mainnet'
+                ctx.environment.label !== 'mainnet-beta'
                   ? `?cluster=${ctx.environment.label}`
                   : ''
               }`,
@@ -55,7 +55,7 @@ const Home: NextPage = () => {
                 onClick={() => {
                   router.push(
                     `/${walletName}${
-                      ctx.environment.label !== 'mainnet'
+                      ctx.environment.label !== 'mainnet-beta'
                         ? `?cluster=${ctx.environment.label}`
                         : ''
                     }`,

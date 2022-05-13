@@ -30,7 +30,7 @@ export const Header = () => {
           onClick={() =>
             router.push(
               `/${
-                ctx.environment.label !== 'mainnet'
+                ctx.environment.label !== 'mainnet-beta'
                   ? `?cluster=${ctx.environment.label}`
                   : ''
               }`
@@ -39,7 +39,7 @@ export const Header = () => {
         >
           Hydra UI
         </div>
-        {ctx.environment.label !== 'mainnet' && (
+        {ctx.environment.label !== 'mainnet-beta' && (
           <div className="cursor-pointer rounded-md bg-[#9945ff] p-1 text-[10px] italic text-white">
             {ctx.environment.label}
           </div>
@@ -52,7 +52,7 @@ export const Header = () => {
             onClick={() =>
               router.push(
                 `/create${
-                  ctx.environment.label !== 'mainnet'
+                  ctx.environment.label !== 'mainnet-beta'
                     ? `?cluster=${ctx.environment.label}`
                     : ''
                 }`

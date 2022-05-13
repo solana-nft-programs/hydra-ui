@@ -68,7 +68,7 @@ const Home: NextPage = () => {
                 onClick={() =>
                   router.push(
                     `/${
-                      environment.label !== 'mainnet'
+                      environment.label !== 'mainnet-beta'
                         ? `?cluster=${environment.label}`
                         : ''
                     }`,
@@ -111,6 +111,7 @@ const Home: NextPage = () => {
             <p className="font-bold uppercase tracking-wide text-md mb-1">
               Wallet Address:{' '}
               <a
+                className="hover:text-blue-500 transition"
                 target="_blank"
                 rel="noopener noreferrer"
                 href={pubKeyUrl(
@@ -142,7 +143,7 @@ const Home: NextPage = () => {
                         connection={connection}
                         address={voucher.parsed.membershipKey}
                       />
-                      <span className="ml-2">
+                      <span className="ml-2 hover:text-blue-500 transition">
                         {`(${voucher.parsed.shares.toString()} shares, `}
                         {`${
                           parseInt(voucher.parsed.totalInflow.toString()) / 1e9
