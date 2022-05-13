@@ -1,87 +1,83 @@
-import { Connection } from "@solana/web3.js";
-import { firstParam } from "../common/utils";
-import { NextPageContext } from "next";
-import { useRouter } from "next/router";
-import React, { useContext, useMemo, useState } from "react";
+import { Cluster, Connection } from '@solana/web3.js'
+import { firstParam } from 'common/utils'
+import { NextPageContext } from 'next'
+import { useRouter } from 'next/router'
+import React, { useContext, useMemo, useState } from 'react'
 
 export interface Environment {
-  label: string;
-  value: string;
-  override?: string;
+  label: Cluster
+  primary: string
+  secondary?: string
 }
 
 export interface EnvironmentContextValues {
-  environment: Environment;
-  setEnvironment: (newEnvironment: Environment) => void;
-  connection: Connection;
+  environment: Environment
+  setEnvironment: (newEnvironment: Environment) => void
+  connection: Connection
 }
 
 export const ENVIRONMENTS: Environment[] = [
   {
-    label: "mainnet",
-    value:
-      "https://solana-api.syndica.io/access-token/bkBr4li7aGVa3euVG0q4iSI6uuMiEo2jYQD35r8ytGZrksM7pdJi2a57pmlYRqCw",
-    override: "https://ssc-dao.genesysgo.net",
+    label: 'mainnet-beta',
+    primary:
+      'https://solana-api.syndica.io/access-token/bkBr4li7aGVa3euVG0q4iSI6uuMiEo2jYQD35r8ytGZrksM7pdJi2a57pmlYRqCw',
+    secondary: 'https://ssc-dao.genesysgo.net',
   },
   {
-    label: "testnet",
-    value: "https://api.testnet.solana.com",
+    label: 'testnet',
+    primary: 'https://api.testnet.solana.com',
   },
   {
-    label: "devnet",
-    value: "https://purple-old-lake.solana-devnet.quiknode.pro/13480a1cc2033abc1d3523523bc1acabd97b6874/",
+    label: 'devnet',
+    primary: 'https://api.devnet.solana.com',
   },
-  {
-    label: "localnet",
-    value: "http://127.0.0.1:8899",
-  },
-];
+]
 
 const EnvironmentContext: React.Context<null | EnvironmentContextValues> =
-  React.createContext<null | EnvironmentContextValues>(null);
+  React.createContext<null | EnvironmentContextValues>(null)
 
 export const getInitialProps = async ({
   ctx,
 }: {
-  ctx: NextPageContext;
+  ctx: NextPageContext
 }): Promise<{ cluster: string }> => {
-  const cluster = (ctx.query.project || ctx.query.host)?.includes("dev")
-    ? "devnet"
-    : (ctx.query.project || ctx.query.host)?.includes("test")
-    ? "testnet"
-    : ctx.query.cluster || process.env.BASE_CLUSTER;
+  const cluster = (ctx.req?.headers.host || ctx.query.host)?.includes('dev')
+    ? 'devnet'
+    : (ctx.query.project || ctx.query.host)?.includes('test')
+    ? 'testnet'
+    : ctx.query.cluster || process.env.BASE_CLUSTER
   return {
     cluster: firstParam(cluster),
-  };
-};
+  }
+}
 
 export function EnvironmentProvider({
   children,
   defaultCluster,
 }: {
-  children: React.ReactChild;
-  defaultCluster: string;
+  children: React.ReactChild
+  defaultCluster: string
 }) {
-  const { query } = useRouter();
-  const cluster = (query.project || query.host)?.includes("dev")
-    ? "devnet"
-    : (query.project || query.host)?.includes("test")
-    ? "testnet"
-    : query.cluster || defaultCluster || process.env.BASE_CLUSTER;
-  const foundEnvironment = ENVIRONMENTS.find((e) => e.label === cluster);
+  const { query } = useRouter()
+  const cluster = (query.project || query.host)?.includes('dev')
+    ? 'devnet'
+    : query.host?.includes('test')
+    ? 'testnet'
+    : query.cluster || defaultCluster || process.env.BASE_CLUSTER
+  const foundEnvironment = ENVIRONMENTS.find((e) => e.label === cluster)
   const [environment, setEnvironment] = useState<Environment>(
     foundEnvironment ?? ENVIRONMENTS[0]!
-  );
+  )
 
   useMemo(() => {
-    const foundEnvironment = ENVIRONMENTS.find((e) => e.label === cluster);
-    setEnvironment(foundEnvironment ?? ENVIRONMENTS[0]!);
-  }, [cluster]);
+    const foundEnvironment = ENVIRONMENTS.find((e) => e.label === cluster)
+    setEnvironment(foundEnvironment ?? ENVIRONMENTS[0]!)
+  }, [cluster])
 
   const connection = useMemo(
-    () => new Connection(environment.value, { commitment: "recent" }),
+    () => new Connection(environment.primary, { commitment: 'recent' }),
     [environment]
-  );
+  )
 
   return (
     <EnvironmentContext.Provider
@@ -93,13 +89,13 @@ export function EnvironmentProvider({
     >
       {children}
     </EnvironmentContext.Provider>
-  );
+  )
 }
 
 export function useEnvironmentCtx(): EnvironmentContextValues {
-  const context = useContext(EnvironmentContext);
+  const context = useContext(EnvironmentContext)
   if (!context) {
-    throw new Error("Missing connection context");
+    throw new Error('Missing connection context')
   }
-  return context;
+  return context
 }
