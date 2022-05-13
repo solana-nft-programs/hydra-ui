@@ -114,7 +114,7 @@ const Home: NextPage = () => {
             />
           </div>
           <div className="flex flex-wrap mb-6">
-            <div className="w-full md:w-4/5 pr-3 mb-6 md:mb-0">
+            <div className="w-4/5 pr-3 mb-6 md:mb-0">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                 Wallet Address
               </label>
@@ -138,7 +138,7 @@ const Home: NextPage = () => {
                   )
                 })}
             </div>
-            <div className="w-full md:w-1/5">
+            <div className="w-1/5">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                 Shares / 100
               </label>
