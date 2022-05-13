@@ -7,6 +7,10 @@ This is an open UI for Hydra, a protocol on Solana for facilitating collective a
 | `Devnet`  | Devnet ui for Hydra  | https://dev-hydra.cardinal.so |
 | `Mainnet` | Mainnet ui for Hydra | https://hydra.cardinal.so     |
 
+<p align="center">
+    <img src="./public/example.png" />
+</p>
+
 ## Getting Started
 
 ```bash
