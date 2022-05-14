@@ -20,7 +20,7 @@ export const ENVIRONMENTS: Environment[] = [
   {
     label: 'mainnet-beta',
     primary:
-      'https://solana-api.syndica.io/access-token/bkBr4li7aGVa3euVG0q4iSI6uuMiEo2jYQD35r8ytGZrksM7pdJi2a57pmlYRqCw',
+      'https://solana-api.syndica.io/access-token/mRW51tUgvuCwoF3DuHCMSBMxQyE8wXkP7Y7CnIzB4j1C8p8gt6SBBct5Gf2ey3xc',
     secondary: 'https://ssc-dao.genesysgo.net',
   },
   {
