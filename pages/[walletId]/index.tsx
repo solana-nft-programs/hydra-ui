@@ -21,29 +21,79 @@ const Home: NextPage = () => {
   const fanoutData = useFanoutData()
   const { connection, environment } = useEnvironmentCtx()
 
-  const claimShare = async (fanoutData: FanoutData) => {
+  const distributeShare = async (
+    fanoutData: FanoutData,
+    addAllMembers: boolean
+  ) => {
     try {
       if (wallet && wallet.publicKey && fanoutData.fanoutId) {
         const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
-        let distMember1 = await fanoutSdk.distributeWalletMemberInstructions({
-          distributeForMint: false,
-          member: wallet.publicKey,
-          fanout: fanoutData.fanoutId,
-          payer: wallet.publicKey,
-        })
-
-        const transaction = new Transaction()
-        transaction.instructions = [...distMember1.instructions]
-
-        await executeTransaction(connection, asWallet(wallet), transaction, {
-          confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
-          signers: [],
-        })
-        notify({
-          message: `Claim successful`,
-          description: `Successfully claimed your share from ${fanoutData.fanout.name}`,
-          type: 'success',
-        })
+        if (addAllMembers) {
+          if (fanoutMembershipVouchers.data) {
+            const distributionMemberSize = 5
+            const vouchers = fanoutMembershipVouchers.data
+            for (let i = 0; i < vouchers.length; i += distributionMemberSize) {
+              let transaction = new Transaction()
+              const chunk = vouchers.slice(i, i + distributionMemberSize)
+              for (const voucher of chunk) {
+                let distMember =
+                  await fanoutSdk.distributeWalletMemberInstructions({
+                    distributeForMint: false,
+                    member: voucher.parsed.membershipKey,
+                    fanout: fanoutData.fanoutId,
+                    payer: wallet.publicKey,
+                  })
+                transaction.instructions = [
+                  ...transaction.instructions,
+                  ...distMember.instructions,
+                ]
+              }
+              await executeTransaction(
+                connection,
+                asWallet(wallet),
+                transaction,
+                {
+                  confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
+                  signers: [],
+                }
+              )
+              const numTransactions = Math.ceil(vouchers.length / 5)
+              notify({
+                message: `(${
+                  i / 5 + 1
+                } / ${numTransactions}) Claim tx successful`,
+                description: `Claimed shares for ${
+                  i + distributionMemberSize > vouchers.length
+                    ? vouchers.length
+                    : i + distributionMemberSize
+                } / ${vouchers.length} from ${fanoutData.fanout.name}`,
+                type: 'success',
+              })
+            }
+          } else {
+            throw 'No membership data found'
+          }
+        } else {
+          let transaction = new Transaction()
+          let distMember = await fanoutSdk.distributeWalletMemberInstructions({
+            distributeForMint: false,
+            member: wallet.publicKey,
+            fanout: fanoutData.fanoutId,
+            payer: wallet.publicKey,
+          })
+          transaction.instructions = [...distMember.instructions]
+          await executeTransaction(connection, asWallet(wallet), transaction, {
+            confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
+            signers: [],
+          })
+          notify({
+            message: `Claim successful`,
+            description: `Successfully claimed ${
+              addAllMembers ? "everyone's" : 'your'
+            } share from ${fanoutData.fanout.name}`,
+            type: 'success',
+          })
+        }
       }
     } catch (e) {
       notify({
@@ -158,17 +208,30 @@ const Home: NextPage = () => {
               Total Shares: {fanoutData.data?.fanout?.totalShares.toString()}
             </p>
           </div>
-          <AsyncButton
-            type="button"
-            variant="primary"
-            bgColor="rgb(96 165 250)"
-            className="bg-blue-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
-            handleClick={async () =>
-              fanoutData.data && claimShare(fanoutData.data)
-            }
-          >
-            Claim Share
-          </AsyncButton>
+          <div className="flex">
+            <AsyncButton
+              type="button"
+              variant="primary"
+              bgColor="rgb(96 165 250)"
+              className="bg-blue-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md mr-2"
+              handleClick={async () =>
+                fanoutData.data && distributeShare(fanoutData.data, true)
+              }
+            >
+              Distribute To All
+            </AsyncButton>
+            <AsyncButton
+              type="button"
+              variant="primary"
+              bgColor="rgb(156 163 175)"
+              className="bg-gray-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
+              handleClick={async () =>
+                fanoutData.data && distributeShare(fanoutData.data, false)
+              }
+            >
+              Distribute To Yourself
+            </AsyncButton>
+          </div>
         </div>
       </main>
     </div>

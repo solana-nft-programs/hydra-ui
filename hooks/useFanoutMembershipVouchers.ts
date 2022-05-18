@@ -41,14 +41,24 @@ export const useFanoutMembershipVouchers = () => {
           ],
         }
       )
-      return programAccounts.map((account) => {
-        return {
-          pubkey: account.pubkey,
-          parsed: hydra.FanoutMembershipVoucher.fromAccountInfo(
-            account.account
-          )[0],
-        }
-      })
+      return programAccounts
+        .map((account) => {
+          return {
+            pubkey: account.pubkey,
+            parsed: hydra.FanoutMembershipVoucher.fromAccountInfo(
+              account.account
+            )[0],
+          }
+        })
+        .sort((a, b) =>
+          parseInt(a.parsed.shares.toString()) ===
+          parseInt(b.parsed.shares.toString())
+            ? a.parsed.membershipKey
+                .toString()
+                .localeCompare(b.parsed.membershipKey.toString())
+            : parseInt(b.parsed.shares.toString()) -
+              parseInt(a.parsed.shares.toString())
+        )
     },
     [fanoutId?.toString()],
     { name: 'useFanoutMembershipVoucher' }
