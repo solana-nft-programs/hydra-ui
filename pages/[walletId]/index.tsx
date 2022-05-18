@@ -28,28 +28,51 @@ const Home: NextPage = () => {
     try {
       if (wallet && wallet.publicKey && fanoutData.fanoutId) {
         const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
-        const transaction = new Transaction()
         if (addAllMembers) {
           if (fanoutMembershipVouchers.data) {
+            const distributionMemberSize = 5
             const vouchers = fanoutMembershipVouchers.data
-            vouchers.splice(vouchers.length - 3, 3)
-            console.log(vouchers)
-            for (const voucher of vouchers) {
-              console.log(voucher.parsed.membershipKey.toString)
-              let distMember =
-                await fanoutSdk.distributeWalletMemberInstructions({
-                  distributeForMint: false,
-                  member: voucher.parsed.membershipKey,
-                  fanout: fanoutData.fanoutId,
-                  payer: wallet.publicKey,
-                })
-              transaction.instructions = [
-                ...transaction.instructions,
-                ...distMember.instructions,
-              ]
+            for (let i = 0; i < vouchers.length; i += distributionMemberSize) {
+              let transaction = new Transaction()
+              const chunk = vouchers.slice(i, i + distributionMemberSize)
+              for (const voucher of chunk) {
+                let distMember =
+                  await fanoutSdk.distributeWalletMemberInstructions({
+                    distributeForMint: false,
+                    member: voucher.parsed.membershipKey,
+                    fanout: fanoutData.fanoutId,
+                    payer: wallet.publicKey,
+                  })
+                transaction.instructions = [
+                  ...transaction.instructions,
+                  ...distMember.instructions,
+                ]
+              }
+              await executeTransaction(
+                connection,
+                asWallet(wallet),
+                transaction,
+                {
+                  confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
+                  signers: [],
+                }
+              )
+              const numTransactions = distributionMemberSize / 5 + 1
+              notify({
+                message: `(${i+1} / ${numTransactions}) Claim tx successful`,
+                description: `Claimed shares for ${
+                  (i + distributionMemberSize) > vouchers.length
+                    ? vouchers.length
+                    : (i + 1) * distributionMemberSize
+                } / ${vouchers.length} from ${fanoutData.fanout.name}`,
+                type: 'success',
+              })
             }
+          } else {
+            throw 'No membership data found'
           }
         } else {
+          let transaction = new Transaction()
           let distMember = await fanoutSdk.distributeWalletMemberInstructions({
             distributeForMint: false,
             member: wallet.publicKey,
@@ -57,17 +80,18 @@ const Home: NextPage = () => {
             payer: wallet.publicKey,
           })
           transaction.instructions = [...distMember.instructions]
+          await executeTransaction(connection, asWallet(wallet), transaction, {
+            confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
+            signers: [],
+          })
+          notify({
+            message: `Claim successful`,
+            description: `Successfully claimed ${
+              addAllMembers ? "everyone's" : 'your'
+            } share from ${fanoutData.fanout.name}`,
+            type: 'success',
+          })
         }
-
-        await executeTransaction(connection, asWallet(wallet), transaction, {
-          confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
-          signers: [],
-        })
-        notify({
-          message: `Claim successful`,
-          description: `Successfully claimed your share from ${fanoutData.fanout.name}`,
-          type: 'success',
-        })
       }
     } catch (e) {
       notify({
