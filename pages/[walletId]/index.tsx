@@ -57,13 +57,15 @@ const Home: NextPage = () => {
                   signers: [],
                 }
               )
-              const numTransactions = distributionMemberSize / 5 + 1
+              const numTransactions = Math.ceil(vouchers.length / 5)
               notify({
-                message: `(${i+1} / ${numTransactions}) Claim tx successful`,
+                message: `(${
+                  i / 5 + 1
+                } / ${numTransactions}) Claim tx successful`,
                 description: `Claimed shares for ${
-                  (i + distributionMemberSize) > vouchers.length
+                  i + distributionMemberSize > vouchers.length
                     ? vouchers.length
-                    : (i + 1) * distributionMemberSize
+                    : i + distributionMemberSize
                 } / ${vouchers.length} from ${fanoutData.fanout.name}`,
                 type: 'success',
               })
