@@ -16,6 +16,7 @@ const Home: NextPage = () => {
   const { connection } = useEnvironmentCtx()
   const wallet = useWallet()
   const [walletName, setWalletName] = useState<undefined | string>(undefined)
+  const [totalShares, setTotalShares] = useState<undefined | number>(100)
   const [success, setSuccess] = useState(false)
   const [hydraWalletMembers, setHydraWalletMembers] = useState<
     { memberKey?: string; shares?: number }[]
@@ -29,6 +30,12 @@ const Home: NextPage = () => {
       if (walletName.includes(' ')) {
         throw 'Wallet name cannot contain spaces'
       }
+      if (!totalShares) {
+        throw 'Please specify the total number of shares for distribution'
+      }
+      if (totalShares <= 0) {
+        throw 'Please specify a positive number of shares'
+      }
       let shareSum = 0
       for (const member of hydraWalletMembers) {
         if (!member.memberKey) {
@@ -41,10 +48,13 @@ const Home: NextPage = () => {
         if (!memberPubkey) {
           throw 'Invalid member public key, unable to cast to PublicKey'
         }
+        if (member.shares <= 0) {
+          throw 'Member shares cannot be negative or zero'
+        }
         shareSum += member.shares
       }
-      if (shareSum !== 100) {
-        throw 'Sum of all shares must equal 100'
+      if (shareSum !== totalShares) {
+        throw `Sum of all shares must equal ${totalShares}`
       }
       if (!hydraWalletMembers || hydraWalletMembers.length == 0) {
         throw 'Please specify at least one member'
@@ -52,6 +62,7 @@ const Home: NextPage = () => {
       if (!hydraWalletMembers || hydraWalletMembers.length > 9) {
         throw 'Too many members - submit a PR to https://github.com/cardinal-labs/hydra-ui to increase this minimum'
       }
+
       const fanoutId = (await FanoutClient.fanoutKey(walletName))[0]
       const [nativeAccountId] = await FanoutClient.nativeAccount(fanoutId)
       const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
@@ -65,7 +76,7 @@ const Home: NextPage = () => {
       transaction.add(
         ...(
           await fanoutSdk.initializeFanoutInstructions({
-            totalShares: 100,
+            totalShares,
             name: walletName,
             membershipModel: MembershipModel.Wallet,
           })
@@ -136,6 +147,23 @@ const Home: NextPage = () => {
               value={walletName}
             />
           </div>
+          <div className="w-full mb-6">
+            <label
+              className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+              htmlFor="grid-first-name"
+            >
+              Total Shares
+            </label>
+            <input
+              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+              name="grid-first-name"
+              type="number"
+              onChange={(e) => {
+                setTotalShares(parseInt(e.target.value))
+              }}
+              value={totalShares}
+            />
+          </div>
           <div className="flex flex-wrap mb-6">
             <div className="w-4/5 pr-3 mb-6 md:mb-0">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -163,7 +191,7 @@ const Home: NextPage = () => {
             </div>
             <div className="w-1/5">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
-                Shares / 100
+                Shares {totalShares ? `/ ${totalShares}` : ''}
               </label>
               {hydraWalletMembers.map((member, i) => {
                 return (
@@ -171,8 +199,8 @@ const Home: NextPage = () => {
                     <input
                       className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
                       id="grid-last-name"
-                      type="text"
-                      placeholder="10"
+                      type="number"
+                      placeholder="50"
                       onChange={(e) => {
                         const walletMembers = hydraWalletMembers
                         walletMembers[i]!.shares = parseInt(e.target.value)
