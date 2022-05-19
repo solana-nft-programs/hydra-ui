@@ -1,7 +1,9 @@
 import { Fanout, FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
 import { Wallet } from '@saberhq/solana-contrib'
+import { Token } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Transaction } from '@solana/web3.js'
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
@@ -10,13 +12,15 @@ import { tryPublicKey } from 'common/utils'
 import { asWallet } from 'common/Wallets'
 import type { NextPage } from 'next'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
   const { connection } = useEnvironmentCtx()
   const wallet = useWallet()
   const [walletName, setWalletName] = useState<undefined | string>(undefined)
   const [totalShares, setTotalShares] = useState<undefined | number>(100)
+  const [tokenAddress, setTokenAddress] = useState<null | string>(null)
+  const [validTokenAddress, setValidTokenAddress] = useState<boolean>(false)
   const [success, setSuccess] = useState(false)
   const [hydraWalletMembers, setHydraWalletMembers] = useState<
     { memberKey?: string; shares?: number }[]
@@ -35,6 +39,9 @@ const Home: NextPage = () => {
       }
       if (totalShares <= 0) {
         throw 'Please specify a positive number of shares'
+      }
+      if (!validTokenAddress) {
+        throw 'Please enter a valid token address or leave blank'
       }
       let shareSum = 0
       for (const member of hydraWalletMembers) {
@@ -79,6 +86,7 @@ const Home: NextPage = () => {
             totalShares,
             name: walletName,
             membershipModel: MembershipModel.Wallet,
+            mint: validTokenAddress ? new PublicKey(tokenAddress!) : undefined,
           })
         ).instructions
       )
@@ -104,6 +112,41 @@ const Home: NextPage = () => {
       })
     }
   }
+
+  useEffect(() => {
+    async function checkMintData() {
+      if (tokenAddress && tokenAddress.length > 0) {
+        try {
+          const mint = new PublicKey(tokenAddress)
+          const checkMint = new Token(
+            connection,
+            mint,
+            TOKEN_PROGRAM_ID,
+            Keypair.generate() // unused
+          )
+          let mintInfo = await checkMint.getMintInfo()
+          if (!mintInfo) {
+            throw 'Invalid token address'
+          }
+          notify({
+            message: `Valid Token Address`,
+            description: `Custom SPL Token Address added.`,
+            type: 'success',
+          })
+          setValidTokenAddress(true)
+        } catch (e) {
+          notify({
+            message: `Error getting mint data from SPL Token Address`,
+            description: `Invalid SPL Token Address. ${e}`,
+            type: 'error',
+          })
+          setValidTokenAddress(false)
+        }
+      }
+    }
+
+    checkMintData()
+  }, [tokenAddress])
 
   return (
     <div className="bg-white h-screen max-h-screen">
@@ -162,6 +205,24 @@ const Home: NextPage = () => {
                 setTotalShares(parseInt(e.target.value))
               }}
               value={totalShares}
+            />
+          </div>
+          <div className="w-full mb-6">
+            <label
+              className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+              htmlFor="grid-first-name"
+            >
+              SPL Token Address (if empty defaults to SOL)
+            </label>
+            <input
+              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+              name="grid-first-name"
+              type="text"
+              placeholder={'So11111111111111111111111111111111111111112'}
+              onChange={(e) => {
+                setTokenAddress(e.target.value)
+              }}
+              value={tokenAddress ?? ''}
             />
           </div>
           <div className="flex flex-wrap mb-6">
