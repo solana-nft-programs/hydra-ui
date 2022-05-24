@@ -1,3 +1,4 @@
+import { withFindOrInitAssociatedTokenAccount } from '@cardinal/common'
 import { Fanout, FanoutClient, MembershipModel } from '@glasseaters/hydra-sdk'
 import { Wallet } from '@saberhq/solana-contrib'
 import { Token } from '@solana/spl-token'
@@ -10,6 +11,7 @@ import { notify } from 'common/Notification'
 import { executeTransaction } from 'common/Transactions'
 import { tryPublicKey } from 'common/utils'
 import { asWallet } from 'common/Wallets'
+import { HYDRA_PROGRAM_ID } from 'hooks/useFanoutMints'
 import type { NextPage } from 'next'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 import { useEffect, useState } from 'react'
@@ -40,7 +42,7 @@ const Home: NextPage = () => {
       if (totalShares <= 0) {
         throw 'Please specify a positive number of shares'
       }
-      if (!validTokenAddress) {
+      if (!validTokenAddress && tokenAddress !== null) {
         throw 'Please enter a valid token address or leave blank'
       }
       let shareSum = 0
@@ -86,7 +88,6 @@ const Home: NextPage = () => {
             totalShares,
             name: walletName,
             membershipModel: MembershipModel.Wallet,
-            mint: validTokenAddress ? new PublicKey(tokenAddress!) : undefined,
           })
         ).instructions
       )

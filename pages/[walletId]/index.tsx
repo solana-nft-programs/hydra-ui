@@ -1,7 +1,10 @@
 import { DisplayAddress } from '@cardinal/namespaces-components'
 import { executeTransaction } from '@cardinal/staking'
 import { FanoutClient } from '@glasseaters/hydra-sdk'
+import { CreateAssociatedTokenAccount } from '@metaplex/js/lib/transactions'
+import { Wallet } from '@saberhq/anchor-contrib/node_modules/@saberhq/solana-contrib'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
 import { Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
@@ -10,6 +13,7 @@ import { pubKeyUrl, shortPubKey } from 'common/utils'
 import { asWallet } from 'common/Wallets'
 import { FanoutData, useFanoutData } from 'hooks/useFanoutData'
 import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
+import { HYDRA_PROGRAM_ID, useFanoutMints } from 'hooks/useFanoutMints'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
@@ -17,9 +21,39 @@ import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 const Home: NextPage = () => {
   const router = useRouter()
   const fanoutMembershipVouchers = useFanoutMembershipVouchers()
+  const fanoutMints = useFanoutMints()
   const wallet = useWallet()
   const fanoutData = useFanoutData()
   const { connection, environment } = useEnvironmentCtx()
+
+  console.log(fanoutData.data?.fanout.name)
+
+  async function addSplToken() {
+    if (fanoutData.data?.fanoutId) {
+      try {
+        console.log(fanoutData.data.fanout.authority.toString())
+        const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
+        const transaction = new Transaction()
+        transaction.add(
+          ...(
+            await fanoutSdk.initializeFanoutForMintInstructions({
+              fanout: fanoutData.data?.fanoutId,
+              mint: new PublicKey(
+                'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'
+              ),
+            })
+          ).instructions
+        )
+        await executeTransaction(connection, wallet as Wallet, transaction, {})
+      } catch (e) {
+        notify({
+          message: 'Error adding SPL Token',
+          description: `${e}`,
+          type: 'error',
+        })
+      }
+    }
+  }
 
   const distributeShare = async (
     fanoutData: FanoutData,
@@ -205,6 +239,30 @@ const Home: NextPage = () => {
               )}
             </ul>
             <p className="font-bold uppercase tracking-wide text-md mb-1">
+              SPL Tokens Supported: {fanoutMints.data?.length}
+            </p>
+            <ul className="list-disc ml-6">
+              {!fanoutMints.data ? (
+                <>
+                  <li className="mb-1 animate h-6 w-24 animate-pulse bg-gray-200 rounded-md"></li>
+                  <li className="mb-1 animate h-6 w-24 animate-pulse bg-gray-200 rounded-md"></li>
+                  <li className="mb-1 animate h-6 w-24 animate-pulse bg-gray-200 rounded-md"></li>
+                </>
+              ) : (
+                fanoutMints.data?.map((mint) => (
+                  <li
+                    key={mint.fanoutMint.mint.toString()}
+                    className="relative font-bold tracking-wide text-md mb-1"
+                  >
+                    <span>
+                      {shortPubKey(mint.fanoutMint.mint.toString())} |{' '}
+                      {mint.balance}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+            <p className="font-bold uppercase tracking-wide text-md mb-1">
               Total Shares: {fanoutData.data?.fanout?.totalShares.toString()}
             </p>
           </div>
@@ -220,17 +278,19 @@ const Home: NextPage = () => {
             >
               Distribute To All
             </AsyncButton>
-            <AsyncButton
-              type="button"
-              variant="primary"
-              bgColor="rgb(156 163 175)"
-              className="bg-gray-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
-              handleClick={async () =>
-                fanoutData.data && distributeShare(fanoutData.data, false)
-              }
-            >
-              Distribute To Yourself
-            </AsyncButton>
+            {fanoutData.data &&
+              fanoutData.data.fanout.authority.toString() ===
+                wallet.publicKey?.toString() && (
+                <AsyncButton
+                  type="button"
+                  variant="primary"
+                  bgColor="rgb(156 163 175)"
+                  className="bg-gray-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
+                  handleClick={async () => addSplToken()}
+                >
+                  Add SPL Token
+                </AsyncButton>
+              )}
           </div>
         </div>
       </main>
