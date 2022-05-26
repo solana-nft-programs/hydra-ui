@@ -19,12 +19,13 @@ import {
 import { asWallet } from 'common/Wallets'
 import { paymentMintConfig } from 'config/paymentMintConfig'
 import { FanoutData, useFanoutData } from 'hooks/useFanoutData'
+import { useFanoutMembershipMintVouchers } from 'hooks/useFanoutMembershipMintVouchers'
 import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
 import { useFanoutMints } from 'hooks/useFanoutMints'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
   const router = useRouter()
@@ -38,6 +39,32 @@ const Home: NextPage = () => {
     mintId && fanoutMints.data
       ? fanoutMints.data.find((mint) => mint.data.mint.toString() === mintId)
       : undefined
+  const fanoutMembershipMintVouchers = useFanoutMembershipMintVouchers(mintId)
+  const [voucherMapping, setVoucherMapping] = useState<{
+    [key: string]: string
+  }>({})
+
+  useEffect(() => {
+    const setMapping = async () => {
+      if (fanoutMembershipVouchers.data && selectedFanoutMint) {
+        let mapping: { [key: string]: string } = {}
+        for (const voucher of fanoutMembershipVouchers.data!) {
+          const [mintMembershipVoucher] =
+            await FanoutClient.mintMembershipVoucher(
+              selectedFanoutMint.id,
+              voucher.parsed.membershipKey,
+              new PublicKey(mintId!)
+            )
+          mapping[voucher.pubkey.toString()] = mintMembershipVoucher.toString()
+        }
+        setVoucherMapping(mapping)
+      } else {
+        setVoucherMapping({})
+      }
+    }
+    setMapping()
+  }, [fanoutMembershipVouchers.data, selectedFanoutMint, mintId])
+  const mapMintVouchersToMembers = async () => {}
 
   async function addSplToken() {
     if (fanoutData.data?.fanoutId) {
@@ -303,17 +330,25 @@ const Home: NextPage = () => {
                         <>
                           {`(${voucher.parsed.shares.toString()} shares, `}
                           {selectedFanoutMint
-                            ? `${
-                                Number(
-                                  getMintNaturalAmountFromDecimal(
-                                    Number(
-                                      selectedFanoutMint.data.totalInflow
-                                    ) - selectedFanoutMint.balance,
-                                    selectedFanoutMint.info.decimals
-                                  )
-                                ) *
-                                (Number(voucher.parsed.shares) / 100)
-                              } ${selectedFanoutMint.config.symbol} claimed)`
+                            ? fanoutMembershipMintVouchers.data
+                              ? `${
+                                  Number(
+                                    getMintNaturalAmountFromDecimal(
+                                      Number(
+                                        fanoutMembershipMintVouchers.data.filter(
+                                          (v) =>
+                                            v.pubkey.toString() ===
+                                            voucherMapping[
+                                              voucher.pubkey.toString()
+                                            ]
+                                        )[0]?.parsed.lastInflow
+                                      ),
+                                      selectedFanoutMint.info.decimals
+                                    )
+                                  ) *
+                                  (Number(voucher.parsed.shares) / 100)
+                                } ${selectedFanoutMint.config.symbol} claimed)`
+                              : 'asd'
                             : `${
                                 parseInt(
                                   voucher.parsed.totalInflow.toString()
