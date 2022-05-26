@@ -1,3 +1,7 @@
+import {
+  PaymentMintConfig,
+  paymentMintConfig,
+} from './../config/paymentMintConfig'
 import { useFanoutId } from 'hooks/useFanoutId'
 import * as hydra from '@glasseaters/hydra-sdk'
 import { BorshAccountsCoder, utils } from '@project-serum/anchor'
@@ -5,17 +9,20 @@ import { PublicKey } from '@solana/web3.js'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 
 import { useDataHook } from './useDataHook'
-import { AccountData } from '@cardinal/token-manager'
 import { FanoutMint } from '@glasseaters/hydra-sdk'
+import * as splToken from '@solana/spl-token'
+import { shortPubKey } from 'common/utils'
 
 export const HYDRA_PROGRAM_ID = new PublicKey(
   'hyDQ4Nz1eYyegS6JfenyKwKzYxRsCWCriYSAjtzP4Vg'
 )
 
 export type FanoutMintData = {
-  fanoutMintId: PublicKey
-  fanoutMint: FanoutMint
+  id: PublicKey
+  data: FanoutMint
   balance: number
+  info: splToken.MintInfo
+  config: PaymentMintConfig
 }
 
 export const useFanoutMints = () => {
@@ -47,23 +54,37 @@ export const useFanoutMints = () => {
       )
       const fanoutMints = await Promise.all(
         programAccounts.map(async (account) => {
+          const fanoutMintData = hydra.FanoutMint.fromAccountInfo(
+            account.account
+          )[0]
+          const mintAddress = fanoutMintData.mint
           return {
-            fanoutMintId: account.pubkey,
-            fanoutMint: hydra.FanoutMint.fromAccountInfo(account.account)[0],
+            id: account.pubkey,
+            data: fanoutMintData,
             balance: parseFloat(
               (
                 await connection.getTokenAccountBalance(
-                  hydra.FanoutMint.fromAccountInfo(account.account)[0]
-                    .tokenAccount
+                  fanoutMintData.tokenAccount
                 )
               ).value.uiAmountString ?? '0'
             ),
+            info: await new splToken.Token(
+              connection,
+              mintAddress,
+              splToken.TOKEN_PROGRAM_ID,
+              // @ts-ignore
+              null
+            ).getMintInfo(),
+            config: paymentMintConfig[fanoutMintData.mint.toString()] ?? {
+              name: shortPubKey(mintAddress),
+              symbol: shortPubKey(mintAddress),
+            },
           } as FanoutMintData
         })
       )
       return fanoutMints
     },
     [fanoutId?.toString()],
-    { name: 'useFanoutMembershipVoucher' }
+    { name: 'useFanoutMints' }
   )
 }
