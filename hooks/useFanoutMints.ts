@@ -79,7 +79,7 @@ export const useFanoutMints = () => {
               name: shortPubKey(mintAddress),
               symbol: shortPubKey(mintAddress),
             },
-          } as FanoutMintData
+          }
         })
       )
       return fanoutMints

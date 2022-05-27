@@ -51,17 +51,6 @@ export const useFanoutMembershipMintVouchers = (
         }
       )
 
-      console.log(
-        programAccounts.map((account) => {
-          return {
-            pubkey: account.pubkey,
-            parsed: hydra.FanoutMembershipMintVoucher.fromAccountInfo(
-              account.account
-            )[0].lastInflow.toString(),
-          }
-        })
-      )
-
       return programAccounts.map((account) => {
         return {
           pubkey: account.pubkey,

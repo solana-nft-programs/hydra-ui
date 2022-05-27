@@ -64,7 +64,6 @@ const Home: NextPage = () => {
     }
     setMapping()
   }, [fanoutMembershipVouchers.data, selectedFanoutMint, mintId])
-  const mapMintVouchersToMembers = async () => {}
 
   async function addSplToken() {
     if (fanoutData.data?.fanoutId) {
@@ -348,7 +347,7 @@ const Home: NextPage = () => {
                                   ) *
                                   (Number(voucher.parsed.shares) / 100)
                                 } ${selectedFanoutMint.config.symbol} claimed)`
-                              : 'asd'
+                              : `0 ${selectedFanoutMint.config.symbol} claimed)`
                             : `${
                                 parseInt(
                                   voucher.parsed.totalInflow.toString()

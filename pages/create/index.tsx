@@ -125,7 +125,7 @@ const Home: NextPage = () => {
             TOKEN_PROGRAM_ID,
             Keypair.generate() // unused
           )
-          let mintInfo = await checkMint.getMintInfo()
+          const mintInfo = await checkMint.getMintInfo()
           if (!mintInfo) {
             throw 'Invalid token address'
           }
