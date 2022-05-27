@@ -75,7 +75,7 @@ export function EnvironmentProvider({
   }, [cluster])
 
   const connection = useMemo(
-    () => new Connection(environment.primary, { commitment: 'recent' }),
+    () => new Connection(environment.primary, { commitment: 'confirmed' }),
     [environment]
   )
 

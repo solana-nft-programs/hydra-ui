@@ -1,25 +1,102 @@
+import { findAta, withFindOrInitAssociatedTokenAccount } from '@cardinal/common'
 import { DisplayAddress } from '@cardinal/namespaces-components'
 import { executeTransaction } from '@cardinal/staking'
 import { FanoutClient } from '@glasseaters/hydra-sdk'
+import { CreateAssociatedTokenAccount } from '@metaplex/js/lib/transactions'
+import { Wallet } from '@saberhq/anchor-contrib/node_modules/@saberhq/solana-contrib'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
 import { Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
-import { pubKeyUrl, shortPubKey } from 'common/utils'
+import {
+  getMintNaturalAmountFromDecimal,
+  pubKeyUrl,
+  shortPubKey,
+  tryPublicKey,
+} from 'common/utils'
 import { asWallet } from 'common/Wallets'
+import { paymentMintConfig } from 'config/paymentMintConfig'
 import { FanoutData, useFanoutData } from 'hooks/useFanoutData'
+import { useFanoutMembershipMintVouchers } from 'hooks/useFanoutMembershipMintVouchers'
 import { useFanoutMembershipVouchers } from 'hooks/useFanoutMembershipVouchers'
+import { useFanoutMints } from 'hooks/useFanoutMints'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
+import { useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
   const router = useRouter()
+  const [mintId, setMintId] = useState<string | undefined>()
   const fanoutMembershipVouchers = useFanoutMembershipVouchers()
+  const fanoutMints = useFanoutMints()
   const wallet = useWallet()
   const fanoutData = useFanoutData()
   const { connection, environment } = useEnvironmentCtx()
+  let selectedFanoutMint =
+    mintId && fanoutMints.data
+      ? fanoutMints.data.find((mint) => mint.data.mint.toString() === mintId)
+      : undefined
+  const fanoutMembershipMintVouchers = useFanoutMembershipMintVouchers(mintId)
+  const [voucherMapping, setVoucherMapping] = useState<{
+    [key: string]: string
+  }>({})
+
+  useEffect(() => {
+    const setMapping = async () => {
+      if (fanoutMembershipVouchers.data && selectedFanoutMint) {
+        let mapping: { [key: string]: string } = {}
+        for (const voucher of fanoutMembershipVouchers.data!) {
+          const [mintMembershipVoucher] =
+            await FanoutClient.mintMembershipVoucher(
+              selectedFanoutMint.id,
+              voucher.parsed.membershipKey,
+              new PublicKey(mintId!)
+            )
+          mapping[voucher.pubkey.toString()] = mintMembershipVoucher.toString()
+        }
+        setVoucherMapping(mapping)
+      } else {
+        setVoucherMapping({})
+      }
+    }
+    setMapping()
+  }, [fanoutMembershipVouchers.data, selectedFanoutMint, mintId])
+
+  async function addSplToken() {
+    if (fanoutData.data?.fanoutId) {
+      try {
+        const tokenAddress = prompt('Please enter an SPL token address:')
+        const tokenPK = tryPublicKey(tokenAddress)
+        if (!tokenPK) {
+          throw 'Invalid SPL token address, please enter a valid address based on your network'
+        }
+        const fanoutSdk = new FanoutClient(connection, asWallet(wallet!))
+        const transaction = new Transaction()
+        transaction.add(
+          ...(
+            await fanoutSdk.initializeFanoutForMintInstructions({
+              fanout: fanoutData.data?.fanoutId,
+              mint: tokenPK,
+            })
+          ).instructions
+        )
+        await executeTransaction(connection, wallet as Wallet, transaction, {})
+      } catch (e) {
+        notify({
+          message: 'Error adding SPL Token',
+          description: `${e}`,
+          type: 'error',
+        })
+      }
+    }
+  }
+
+  const selectSplToken = (mintId: string) => {
+    setMintId(mintId === 'default' ? undefined : mintId)
+  }
 
   const distributeShare = async (
     fanoutData: FanoutData,
@@ -38,7 +115,10 @@ const Home: NextPage = () => {
               for (const voucher of chunk) {
                 let distMember =
                   await fanoutSdk.distributeWalletMemberInstructions({
-                    distributeForMint: false,
+                    fanoutMint: selectedFanoutMint
+                      ? selectedFanoutMint?.data.mint
+                      : undefined,
+                    distributeForMint: selectedFanoutMint ? true : false,
                     member: voucher.parsed.membershipKey,
                     fanout: fanoutData.fanoutId,
                     payer: wallet.publicKey,
@@ -140,22 +220,58 @@ const Home: NextPage = () => {
                 <div className="animate h-6 w-24 animate-pulse bg-gray-200 rounded-md"></div>
               )}
             </div>
-            <div className="font-bold uppercase tracking-wide text-lg mb-1 flex items-center gap-1">
-              Total Inflow:{' '}
-              {fanoutData.data?.fanout ? (
-                <>
-                  {parseInt(
-                    fanoutData.data?.fanout?.totalInflow.toString() ?? '0'
-                  ) / 1e9}{' '}
-                  ◎
-                </>
-              ) : (
-                <div className="animate h-6 w-10 animate-pulse bg-gray-200 rounded-md"></div>
-              )}
+            <div className="flex justify-between">
+              <div className="flex-col">
+                <div className="font-bold uppercase tracking-wide text-lg mb-1 flex items-center gap-1">
+                  Total Inflow:{' '}
+                  {selectedFanoutMint ? (
+                    `${Number(
+                      getMintNaturalAmountFromDecimal(
+                        Number(selectedFanoutMint.data.totalInflow),
+                        selectedFanoutMint.info.decimals
+                      )
+                    )} ${selectedFanoutMint.config.symbol}`
+                  ) : fanoutData.data?.fanout ? (
+                    `${
+                      parseInt(
+                        fanoutData.data?.fanout?.totalInflow.toString() ?? '0'
+                      ) / 1e9
+                    } ◎`
+                  ) : (
+                    <div className="animate h-6 w-10 animate-pulse bg-gray-200 rounded-md"></div>
+                  )}
+                </div>
+                <p className="font-bold uppercase tracking-wide text-lg mb-1">
+                  Balance:{' '}
+                  {selectedFanoutMint
+                    ? `${selectedFanoutMint.balance} ${selectedFanoutMint.config.symbol}`
+                    : `${fanoutData.data?.balance}◎`}
+                </p>
+              </div>
+
+              <div className="">
+                <select
+                  className="w-min-content bg-gray-700 text-white px-4 py-3 border-r-transparent border-r-8 rounded-md"
+                  value={mintId}
+                  onChange={(e) => {
+                    selectSplToken(e.target.value)
+                  }}
+                >
+                  <option value={'default'}>SOL</option>
+                  {fanoutMints.data?.map((fanoutMint) => (
+                    <option
+                      key={fanoutMint.id.toString()}
+                      value={fanoutMint.data.mint.toString()}
+                    >
+                      {paymentMintConfig[fanoutMint.data.mint.toString()]
+                        ? paymentMintConfig[fanoutMint.data.mint.toString()]
+                            ?.name
+                        : shortPubKey(fanoutMint.data.mint.toString())}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <p className="font-bold uppercase tracking-wide text-lg mb-1">
-              Balance: {fanoutData.data?.balance} ◎
-            </p>
           </div>
           <div className="mb-5">
             <p className="font-bold uppercase tracking-wide text-md mb-1">
@@ -172,6 +288,22 @@ const Home: NextPage = () => {
                 {shortPubKey(fanoutData.data?.nativeAccount)}
               </a>
             </p>
+            {selectedFanoutMint && (
+              <p className="font-bold uppercase tracking-wide text-md mb-1">
+                {selectedFanoutMint.config.symbol} Wallet Token Account:{' '}
+                <a
+                  className="hover:text-blue-500 transition"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={pubKeyUrl(
+                    selectedFanoutMint.data.tokenAccount,
+                    environment.label
+                  )}
+                >
+                  {shortPubKey(selectedFanoutMint.data.tokenAccount)}
+                </a>
+              </p>
+            )}
             <p className="font-bold uppercase tracking-wide text-md mb-1">
               Total Members: {fanoutData.data?.fanout?.totalMembers.toString()}
             </p>
@@ -183,7 +315,7 @@ const Home: NextPage = () => {
                   <li className="mb-1 animate h-6 w-24 animate-pulse bg-gray-200 rounded-md"></li>
                 </>
               ) : (
-                fanoutMembershipVouchers.data?.map((voucher) => (
+                fanoutMembershipVouchers.data?.map((voucher, i) => (
                   <li
                     key={voucher.pubkey.toString()}
                     className="relative font-bold uppercase tracking-wide text-md mb-1"
@@ -194,10 +326,34 @@ const Home: NextPage = () => {
                         address={voucher.parsed.membershipKey}
                       />
                       <span className="ml-2 hover:text-blue-500 transition">
-                        {`(${voucher.parsed.shares.toString()} shares, `}
-                        {`${
-                          parseInt(voucher.parsed.totalInflow.toString()) / 1e9
-                        }◎ claimed)`}
+                        <>
+                          {`(${voucher.parsed.shares.toString()} shares, `}
+                          {selectedFanoutMint
+                            ? fanoutMembershipMintVouchers.data
+                              ? `${
+                                  Number(
+                                    getMintNaturalAmountFromDecimal(
+                                      Number(
+                                        fanoutMembershipMintVouchers.data.filter(
+                                          (v) =>
+                                            v.pubkey.toString() ===
+                                            voucherMapping[
+                                              voucher.pubkey.toString()
+                                            ]
+                                        )[0]?.parsed.lastInflow
+                                      ),
+                                      selectedFanoutMint.info.decimals
+                                    )
+                                  ) *
+                                  (Number(voucher.parsed.shares) / 100)
+                                } ${selectedFanoutMint.config.symbol} claimed)`
+                              : `0 ${selectedFanoutMint.config.symbol} claimed)`
+                            : `${
+                                parseInt(
+                                  voucher.parsed.totalInflow.toString()
+                                ) / 1e9
+                              }◎ claimed)`}
+                        </>
                       </span>
                     </div>
                   </li>
@@ -220,17 +376,19 @@ const Home: NextPage = () => {
             >
               Distribute To All
             </AsyncButton>
-            <AsyncButton
-              type="button"
-              variant="primary"
-              bgColor="rgb(156 163 175)"
-              className="bg-gray-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
-              handleClick={async () =>
-                fanoutData.data && distributeShare(fanoutData.data, false)
-              }
-            >
-              Distribute To Yourself
-            </AsyncButton>
+            {fanoutData.data &&
+              fanoutData.data.fanout.authority.toString() ===
+                wallet.publicKey?.toString() && (
+                <AsyncButton
+                  type="button"
+                  variant="primary"
+                  bgColor="rgb(156 163 175)"
+                  className="bg-gray-400 text-white hover:bg-blue-500 px-3 py-2 rounded-md "
+                  handleClick={async () => addSplToken()}
+                >
+                  Add SPL Token
+                </AsyncButton>
+              )}
           </div>
         </div>
       </main>

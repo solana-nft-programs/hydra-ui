@@ -1,4 +1,5 @@
 import { web3 } from '@project-serum/anchor'
+import { BigNumber } from 'bignumber.js'
 
 export const firstParam = (param: string | string[] | undefined): string => {
   if (!param) return ''
@@ -62,4 +63,12 @@ export const getColorByBgColor = (bgColor: string) => {
   return parseInt(hexColor(bgColor).replace('#', ''), 16) > 0xffffff / 2
     ? '#000'
     : '#fff'
+}
+
+// Converts amount in decimals to mint amount (natural units)
+export function getMintNaturalAmountFromDecimal(
+  mintAmount: number,
+  decimals: number
+) {
+  return new BigNumber(mintAmount.toString()).shiftedBy(-decimals)
 }
