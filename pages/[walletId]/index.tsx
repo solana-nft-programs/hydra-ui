@@ -45,6 +45,21 @@ const Home: NextPage = () => {
   }>({})
 
   useEffect(() => {
+    const anchor = router.asPath.split('#')[1]
+    const fanoutMint = fanoutMints.data?.find(
+      (fanoutMint) =>
+        fanoutMint.config.symbol === anchor ||
+        fanoutMint.id.toString() === anchor
+    )
+    if (fanoutMint?.data.mint && fanoutMint?.data.mint.toString() !== mintId) {
+      selectSplToken(fanoutMint?.data.mint.toString())
+    }
+  }, [
+    router,
+    fanoutMints.data?.map((fanoutMint) => fanoutMint.id.toString()).join(','),
+  ])
+
+  useEffect(() => {
     const setMapping = async () => {
       if (fanoutMembershipVouchers.data && selectedFanoutMint) {
         let mapping: { [key: string]: string } = {}
@@ -96,6 +111,10 @@ const Home: NextPage = () => {
 
   const selectSplToken = (mintId: string) => {
     setMintId(mintId === 'default' ? undefined : mintId)
+    const fanoutMint = fanoutMints.data?.find(
+      (fanoutMint) => fanoutMint.data.mint.toString() === mintId
+    )
+    router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
   }
 
   const distributeShare = async (
@@ -275,20 +294,17 @@ const Home: NextPage = () => {
           </div>
           <div className="mb-5">
             <p className="font-bold uppercase tracking-wide text-md mb-1">
-              Wallet Address:{' '}
+              Fanout Address:{' '}
               <a
                 className="hover:text-blue-500 transition"
                 target="_blank"
                 rel="noopener noreferrer"
-                href={pubKeyUrl(
-                  fanoutData.data?.nativeAccount,
-                  environment.label
-                )}
+                href={pubKeyUrl(fanoutData.data?.fanoutId, environment.label)}
               >
-                {shortPubKey(fanoutData.data?.nativeAccount)}
+                {shortPubKey(fanoutData.data?.fanoutId.toString())}
               </a>
             </p>
-            {selectedFanoutMint && (
+            {selectedFanoutMint ? (
               <p className="font-bold uppercase tracking-wide text-md mb-1">
                 {selectedFanoutMint.config.symbol} Wallet Token Account:{' '}
                 <a
@@ -301,6 +317,21 @@ const Home: NextPage = () => {
                   )}
                 >
                   {shortPubKey(selectedFanoutMint.data.tokenAccount)}
+                </a>
+              </p>
+            ) : (
+              <p className="font-bold uppercase tracking-wide text-md mb-1">
+                Sol Wallet Address:{' '}
+                <a
+                  className="hover:text-blue-500 transition"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={pubKeyUrl(
+                    fanoutData.data?.nativeAccount,
+                    environment.label
+                  )}
+                >
+                  {shortPubKey(fanoutData.data?.nativeAccount)}
                 </a>
               </p>
             )}
