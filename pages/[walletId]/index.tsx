@@ -206,9 +206,9 @@ const Home: NextPage = () => {
     <div className="bg-white h-screen max-h-screen">
       <Header />
       <main className="h-[80%] py-16 flex flex-1 flex-col justify-center items-center">
-        <div className="text-gray-700 w-full max-w-lg py-3 md:px-0 px-10 mb-10">
+        <div className="text-gray-700 w-full max-w-xl py-3 md:px-0 px-10 mb-10">
           {fanoutData.error && (
-            <div className="text-gray-700 bg-red-300 w-full max-w-lg text-center py-3 mb-10">
+            <div className="text-gray-700 bg-red-300 w-full text-center py-3 mb-10">
               <div className="font-bold uppercase tracking-wide">
                 Hydra Wallet not found
               </div>
