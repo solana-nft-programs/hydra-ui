@@ -39,7 +39,7 @@ const Home: NextPage = () => {
               Wallet Name
             </label>
             <input
-              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
               id="grid-first-name"
               onSubmit={() => alert('HEr')}
               type="text"
@@ -49,6 +49,7 @@ const Home: NextPage = () => {
               }}
               value={walletName}
             />
+            <span className="text-xs mt-1 mb-3 block text-gray-400 italic">We currently only support Hydra wallets of membership model Wallet</span>
             <div>
               <div
                 className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md float-right cursor-pointer"

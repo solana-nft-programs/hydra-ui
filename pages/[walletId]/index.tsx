@@ -99,6 +99,11 @@ const Home: NextPage = () => {
           ).instructions
         )
         await executeTransaction(connection, wallet as Wallet, transaction, {})
+        notify({
+          message: 'SPL Token added!',
+          description: `Select the new token in the dropdown menu.`,
+          type: 'success',
+        })
       } catch (e) {
         notify({
           message: 'Error adding SPL Token',
@@ -114,7 +119,9 @@ const Home: NextPage = () => {
     const fanoutMint = fanoutMints.data?.find(
       (fanoutMint) => fanoutMint.data.mint.toString() === mintId
     )
-    router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
+    if (environment.label === 'mainnet-beta') {
+      router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
+    }
   }
 
   const distributeShare = async (
@@ -360,7 +367,8 @@ const Home: NextPage = () => {
                         <>
                           {`(${voucher.parsed.shares.toString()} shares, `}
                           {selectedFanoutMint
-                            ? fanoutMembershipMintVouchers.data
+                            ? fanoutMembershipMintVouchers.data &&
+                              fanoutMembershipMintVouchers.data.length > 0
                               ? `${
                                   Number(
                                     getMintNaturalAmountFromDecimal(
