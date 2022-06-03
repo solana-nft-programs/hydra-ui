@@ -99,6 +99,11 @@ const Home: NextPage = () => {
           ).instructions
         )
         await executeTransaction(connection, wallet as Wallet, transaction, {})
+        notify({
+          message: 'SPL Token added!',
+          description: `Select the new token in the dropdown menu.`,
+          type: 'success',
+        })
       } catch (e) {
         notify({
           message: 'Error adding SPL Token',
