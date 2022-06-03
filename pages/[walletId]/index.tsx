@@ -114,7 +114,9 @@ const Home: NextPage = () => {
     const fanoutMint = fanoutMints.data?.find(
       (fanoutMint) => fanoutMint.data.mint.toString() === mintId
     )
-    router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
+    if (environment.label === 'mainnet-beta') {
+      router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
+    }
   }
 
   const distributeShare = async (
@@ -360,7 +362,8 @@ const Home: NextPage = () => {
                         <>
                           {`(${voucher.parsed.shares.toString()} shares, `}
                           {selectedFanoutMint
-                            ? fanoutMembershipMintVouchers.data
+                            ? fanoutMembershipMintVouchers.data &&
+                              fanoutMembershipMintVouchers.data.length > 0
                               ? `${
                                   Number(
                                     getMintNaturalAmountFromDecimal(
