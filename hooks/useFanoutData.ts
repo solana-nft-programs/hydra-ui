@@ -25,8 +25,11 @@ export const useFanoutData = () => {
       if (!fanoutId) return
       const [nativeAccount] = await FanoutClient.nativeAccount(fanoutId)
       const fanout = await fanoutSdk.fetch<Fanout>(fanoutId, Fanout)
-      const balance =
-        (await connection.getBalance(nativeAccount)) / LAMPORTS_PER_SOL
+      const [fanoutBalance, nativeBalance] = await Promise.all([
+        connection.getBalance(fanoutId),
+        connection.getBalance(nativeAccount),
+      ])
+      const balance = (fanoutBalance + nativeBalance) / LAMPORTS_PER_SOL
       return { fanoutId, fanout, nativeAccount, balance }
     },
     [fanoutId?.toString()],
