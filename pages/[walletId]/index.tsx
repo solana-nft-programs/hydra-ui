@@ -1,12 +1,9 @@
-import { findAta, withFindOrInitAssociatedTokenAccount } from '@cardinal/common'
 import { DisplayAddress } from '@cardinal/namespaces-components'
 import { executeTransaction } from '@cardinal/staking'
 import { FanoutClient } from '@glasseaters/hydra-sdk'
-import { CreateAssociatedTokenAccount } from '@metaplex/js/lib/transactions'
 import { Wallet } from '@saberhq/anchor-contrib/node_modules/@saberhq/solana-contrib'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { PublicKey } from '@solana/web3.js'
-import { Transaction } from '@solana/web3.js'
+import { PublicKey, Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
 import { Header } from 'common/Header'
 import { notify } from 'common/Notification'
@@ -154,15 +151,21 @@ const Home: NextPage = () => {
                   ...distMember.instructions,
                 ]
               }
-              await executeTransaction(
-                connection,
-                asWallet(wallet),
-                transaction,
-                {
-                  confirmOptions: { commitment: 'confirmed', maxRetries: 3 },
-                  signers: [],
-                }
+
+              const { blockhash } = await connection.getLatestBlockhash()
+              transaction.recentBlockhash = blockhash
+              transaction.feePayer = wallet.publicKey
+              transaction = await wallet.signTransaction!(transaction)
+
+              const signature = await connection.sendRawTransaction(
+                transaction.serialize(),
+                { maxRetries: 3 }
               )
+
+              console.info('Tx sig:', signature)
+
+              await connection.confirmTransaction(signature, 'confirmed')
+
               const numTransactions = Math.ceil(vouchers.length / 5)
               notify({
                 message: `(${
