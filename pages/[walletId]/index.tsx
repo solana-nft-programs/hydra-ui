@@ -95,7 +95,6 @@ const Home: NextPage = () => {
             })
           ).instructions
         )
-        // console.log('transaction', JSON.stringify(transaction, null, 2))
         await executeTransaction(connection, wallet as Wallet, transaction, {})
         notify({
           message: 'SPL Token added!',

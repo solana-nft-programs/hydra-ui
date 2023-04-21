@@ -1,4 +1,3 @@
-// import type { Wallet } from '@saberhq/solana-contrib'
 import type { WalletContextState } from '@solana/wallet-adapter-react'
 import { Wallet } from '@coral-xyz/anchor/dist/cjs/provider'
 
