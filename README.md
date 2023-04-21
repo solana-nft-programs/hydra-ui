@@ -15,6 +15,8 @@ This is an open UI for Hydra, a protocol on Solana for facilitating collective a
 
 ```bash
 git clone https://github.com/cardinal-labs/hydra-ui.git
+cd hydra-ui
+yarn install
 yarn dev
 ```
 

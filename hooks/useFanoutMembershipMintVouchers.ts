@@ -1,12 +1,12 @@
 import { tryPublicKey } from './../common/utils'
 import { useFanoutId } from 'hooks/useFanoutId'
 import * as hydra from '@glasseaters/hydra-sdk'
-import { BorshAccountsCoder, utils } from '@project-serum/anchor'
+import { BorshAccountsCoder, utils } from '@coral-xyz/anchor'
 import { PublicKey } from '@solana/web3.js'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 
 import { useDataHook } from './useDataHook'
-import { AccountData } from '@cardinal/token-manager'
+import { AccountData } from '@cardinal/common'
 import { FanoutMembershipMintVoucher } from '@glasseaters/hydra-sdk'
 
 const HYDRA_PROGRAM_ID = new PublicKey(

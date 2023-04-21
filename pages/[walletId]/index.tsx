@@ -1,7 +1,7 @@
 import { DisplayAddress } from '@cardinal/namespaces-components'
 import { executeTransaction } from '@cardinal/staking'
 import { FanoutClient } from '@glasseaters/hydra-sdk'
-import { Wallet } from '@saberhq/anchor-contrib/node_modules/@saberhq/solana-contrib'
+import { Wallet } from '@coral-xyz/anchor/dist/cjs/provider'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, Transaction } from '@solana/web3.js'
 import { AsyncButton } from 'common/Button'
@@ -95,6 +95,7 @@ const Home: NextPage = () => {
             })
           ).instructions
         )
+        // console.log('transaction', JSON.stringify(transaction, null, 2))
         await executeTransaction(connection, wallet as Wallet, transaction, {})
         notify({
           message: 'SPL Token added!',

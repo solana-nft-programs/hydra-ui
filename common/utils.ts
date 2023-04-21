@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 import { BigNumber } from 'bignumber.js'
 
 export const firstParam = (param: string | string[] | undefined): string => {
