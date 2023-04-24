@@ -15,6 +15,7 @@ import {
 } from '@solana/wallet-adapter-wallets'
 import { useMemo } from 'react'
 import { ToastContainer } from 'common/Notification'
+import Head from 'next/head'
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
@@ -24,6 +25,10 @@ const App = ({
   cluster,
 }: AppProps & { cluster: string }) => {
   return (
+    <>
+    <Head>
+        <title>Hydra UI</title>
+    </Head>
     <EnvironmentProvider defaultCluster={cluster}>
       <WalletProvider
         wallets={[new PhantomWalletAdapter(), new GlowWalletAdapter()]}
@@ -38,6 +43,7 @@ const App = ({
         </WalletIdentityProvider>
       </WalletProvider>
     </EnvironmentProvider>
+    </>
   )
 }
 

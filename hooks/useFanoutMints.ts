@@ -4,7 +4,7 @@ import {
 } from './../config/paymentMintConfig'
 import { useFanoutId } from 'hooks/useFanoutId'
 import * as hydra from '@glasseaters/hydra-sdk'
-import { BorshAccountsCoder, utils } from '@project-serum/anchor'
+import { BorshAccountsCoder, utils } from '@coral-xyz/anchor'
 import { PublicKey } from '@solana/web3.js'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 
