@@ -76,8 +76,7 @@ export const Header = () => {
               zIndex: 10,
               height: '38px',
               border: 'none',
-              background: 'none',
-              backgroundColor: 'none',
+              backgroundColor: '#512da8'
             }}
           />
         )}

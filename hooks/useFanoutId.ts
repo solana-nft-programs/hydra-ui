@@ -6,7 +6,7 @@ import { useDataHook } from './useDataHook'
 export const useFanoutId = () => {
   const { query } = useRouter()
   return useDataHook(
-    async () => (await FanoutClient.fanoutKey(firstParam(query.walletId)))[0],
+    async () => (await FanoutClient.fanoutKey(firstParam(query.id)))[0],
     [query],
     { name: 'useFanoutId' }
   )

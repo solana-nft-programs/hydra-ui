@@ -117,7 +117,7 @@ const Home: NextPage = () => {
       (fanoutMint) => fanoutMint.data.mint.toString() === mintId
     )
     if (environment.label === 'mainnet-beta') {
-      router.push(`${location.pathname}#${fanoutMint?.config.symbol ?? ''}`)
+      router.push(`#${fanoutMint?.config.symbol ?? ''}`)
     }
   }
 
