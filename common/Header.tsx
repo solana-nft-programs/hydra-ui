@@ -1,5 +1,4 @@
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { AccountConnect } from '@cardinal/namespaces-components'
 
 import { Wallet } from '@saberhq/solana-contrib'
@@ -7,6 +6,13 @@ import { useRouter } from 'next/router'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 import styled from '@emotion/styled'
 import { Cluster } from '@solana/web3.js'
+import dynamic from 'next/dynamic'
+
+const WalletMultiButton = dynamic(
+  () =>
+    import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
+  { ssr: false },
+);
 
 export const StyledWalletButton = styled(WalletMultiButton)`
   color: rgb(55, 65, 81, 1);
