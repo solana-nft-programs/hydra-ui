@@ -1,8 +1,8 @@
 import './styles.css'
-import '@cardinal/namespaces-components/dist/esm/styles.css'
+import '@solana-nft-programs/namespaces-components/dist/esm/styles.css'
 import type { AppProps } from 'next/app'
 import { WalletProvider } from '@solana/wallet-adapter-react'
-import { WalletIdentityProvider } from '@cardinal/namespaces-components'
+import { WalletIdentityProvider } from '@solana-nft-programs/namespaces-components'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 
 import {
@@ -26,23 +26,23 @@ const App = ({
 }: AppProps & { cluster: string }) => {
   return (
     <>
-    <Head>
+      <Head>
         <title>Hydra UI</title>
-    </Head>
-    <EnvironmentProvider defaultCluster={cluster}>
-      <WalletProvider
-        wallets={[new PhantomWalletAdapter(), new GlowWalletAdapter()]}
-      >
-        <WalletIdentityProvider>
-          <WalletModalProvider>
-            <>
-              <ToastContainer />
-              <Component {...pageProps} />
-            </>
-          </WalletModalProvider>
-        </WalletIdentityProvider>
-      </WalletProvider>
-    </EnvironmentProvider>
+      </Head>
+      <EnvironmentProvider defaultCluster={cluster}>
+        <WalletProvider
+          wallets={[new PhantomWalletAdapter(), new GlowWalletAdapter()]}
+        >
+          <WalletIdentityProvider>
+            <WalletModalProvider>
+              <>
+                <ToastContainer />
+                <Component {...pageProps} />
+              </>
+            </WalletModalProvider>
+          </WalletIdentityProvider>
+        </WalletProvider>
+      </EnvironmentProvider>
     </>
   )
 }

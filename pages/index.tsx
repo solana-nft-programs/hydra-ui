@@ -43,13 +43,15 @@ const Home: NextPage = () => {
               id="grid-first-name"
               onSubmit={() => alert('HEr')}
               type="text"
-              placeholder="cardinal-wallet"
+              placeholder="wallet"
               onChange={(e) => {
                 setWalletName(e.target.value)
               }}
               value={walletName}
             />
-            <span className="text-xs mt-1 mb-3 block text-gray-400 italic">We currently only support Hydra wallets of membership model Wallet</span>
+            <span className="text-xs mt-1 mb-3 block text-gray-400 italic">
+              We currently only support Hydra wallets of membership model Wallet
+            </span>
             <div>
               <div
                 className="bg-blue-400 text-white hover:bg-blue-500 px-4 py-3 rounded-md float-right cursor-pointer"

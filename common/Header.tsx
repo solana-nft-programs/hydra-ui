@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { AccountConnect } from '@cardinal/namespaces-components'
+import { AccountConnect } from '@solana-nft-programs/namespaces-components'
 
 import { Wallet } from '@saberhq/solana-contrib'
 import { useRouter } from 'next/router'

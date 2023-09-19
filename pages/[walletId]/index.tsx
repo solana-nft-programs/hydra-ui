@@ -1,5 +1,5 @@
-import { DisplayAddress } from '@cardinal/namespaces-components'
-import { executeTransaction } from '@cardinal/staking'
+import { DisplayAddress } from '@solana-nft-programs/namespaces-components'
+import { executeTransaction } from '@solana-nft-programs/staking'
 import { FanoutClient } from '@glasseaters/hydra-sdk'
 import { Wallet } from '@coral-xyz/anchor/dist/cjs/provider'
 import { useWallet } from '@solana/wallet-adapter-react'

@@ -2,19 +2,10 @@
 
 This is an open UI for Hydra, a protocol on Solana for facilitating collective account pooling, fan out wallet and dao treasury. It can be thought of as a group-owned wallet that can accept funds. Unlike a multi-signature wallet, this is meant to collect and distribute funds, not execute group transactions. More information on the protocol can be found a https://github.com/GlassEaters/hydra.
 
-| Package   | Description          | Version                       |
-| :-------- | :------------------- | :---------------------------- |
-| `Devnet`  | Devnet ui for Hydra  | https://dev-hydra.cardinal.so |
-| `Mainnet` | Mainnet ui for Hydra | https://hydra.cardinal.so     |
-
-<p align="center">
-    <img src="./public/example.png" />
-</p>
-
 ## Getting Started
 
 ```bash
-git clone https://github.com/cardinal-labs/hydra-ui.git
+git clone https://github.com/solana-nft-programs/hydra-ui.git
 cd hydra-ui
 yarn install
 yarn dev

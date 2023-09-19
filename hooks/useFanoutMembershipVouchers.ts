@@ -5,7 +5,7 @@ import { PublicKey } from '@solana/web3.js'
 import { useEnvironmentCtx } from 'providers/EnvironmentProvider'
 
 import { useDataHook } from './useDataHook'
-import { AccountData } from '@cardinal/common'
+import { AccountData } from '@solana-nft-programs/common'
 import { FanoutMembershipVoucher } from '@glasseaters/hydra-sdk'
 
 const HYDRA_PROGRAM_ID = new PublicKey(
